@@ -17,6 +17,6 @@ runs:
   steps:
     - name: Parse Repository Name
       shell: pwsh
-      run: |
+      run: >
         ${{ github.action_path }}/scripts/parse-repository-name.ps1
         ${{ inputs.repository }}
