@@ -118,16 +118,19 @@ function GetSecretsFromFile($path){
     if ($path -notmatch "(\.csv$)") {
         throw "The file specified in the SecretsFile argument must be of type csv"
     }
+
+    return @(Import-Csv -Path $path)
 }
 
-function GetSecretOrDefault($repo, $fromSecrets, $name, $default){
-    $secret = $fromSecrets | `
+function GetSecretOrDefault($secrets, $repo, $environment, $secretKey, $default){
+    $secretValue = $secrets | `
                     Where-Object -Property repo -EQ -Value $repo | `
-                    Where-Object -Property secret_name -EQ $name | `
+                    Where-Object -Property environment -EQ $environment | `
+                    Where-Object -Property secret_name -EQ $secretKey | `
                     Select-Object -First 1
 
-    if($secret){
-        return $secret
+    if($secretValue){
+        return $secretValue
     }else{
         return $default
     }
@@ -162,7 +165,7 @@ $sourceRepos | ForEach-Object {
         
         $sourceRepoSecrets | ForEach-Object{
             $sourceRepoSecret = $_
-            $sourceRepoSecretValue = GetSecretOrDefault -repo $sourceRepoSecret -fromSecrets $secrets -name $sourceRepoSecret.name -default "CHANGE_ME"
+            $sourceRepoSecretValue = GetSecretOrDefault -secrets $secrets -repo $sourceRepo.name -environment "" -secretKey $sourceRepoSecret.name -default "CHANGE_ME"
 
             $newTargetRepoSecret = @{            
                 encrypted_value = ConvertTo-SodiumEncryptedString -Text $sourceRepoSecretValue -PublicKey $targetRepoPubKey.key
@@ -193,9 +196,10 @@ $sourceRepos | ForEach-Object {
 
             $sourceRepoEnvironmentSecrets | ForEach-Object {
                 $sourceRepoEnvironmentSecret = $_
+                $sourceRepoEnvironmentSecretValue = GetSecretOrDefault -secrets $secrets -repo $sourceRepo.name -environment $sourceRepoEnvironment.name -secretKey $sourceRepoEnvironmentSecret.name -default "CHANGE_ME"
 
                 $newTargetRepoEnvironmentSecret = @{
-                    encrypted_value = ConvertTo-SodiumEncryptedString -Text "CHANGE_ME" -PublicKey $targetRepoEnvironmentPublicKey.key
+                    encrypted_value = ConvertTo-SodiumEncryptedString -Text $sourceRepoEnvironmentSecretValue -PublicKey $targetRepoEnvironmentPublicKey.key
                     key_id = $targetRepoEnvironmentPublicKey.key_id
                 }
 
