@@ -32,6 +32,10 @@ if($csvFiles.Length -eq 0){
     exit 1
 }
 
+if(-Not(Test-Path -Path $OutputFile.Directory.FullName)){
+    New-Item -Path $OutputFile.Directory.FullName -ItemType Directory -Force | Out-Null
+}
+
 $csvFiles | Import-Csv | Export-Csv $OutputFile -Append -UseQuotes AsNeeded -NoTypeInformation -Encoding utf8
 
 Write-Host "$($csvFiles.Length) csv files were merged into '$($OutputFile.FullName)'." -ForegroundColor Green
