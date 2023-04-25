@@ -9,6 +9,8 @@ param (
         if (-Not ($_ | Test-Path -PathType Container) ) {
             throw "The Path argument must be a folder. File paths are not allowed."
         }
+
+        return $true
     })]
     [System.IO.FileInfo]
     $Path,
