@@ -46,7 +46,8 @@ $secrets = @(Get-ChildItem -Path Env:$($SecretsPrefix)* | Sort-Object Name | For
 })
 
 if($secrets.Length -eq 0){
-    Write-Host "No environment variables with prefix '$SecretsPrefix' were found." -ForegroundColor Yellow
+    Write-Error "No environment variables with prefix '$SecretsPrefix' were found."
+    exit 1
 }else {
     Write-Host "$($secrets.Length) environment variables with prefix '$SecretsPrefix' were found." -ForegroundColor Green
     $secrets | Export-Csv -Path $OutputFile -Force -UseQuotes AsNeeded -NoTypeInformation -Encoding utf8
