@@ -35,34 +35,22 @@ if($teams.Length -eq 0){
     exit 0
 }
 
-$slugMappings = @($teams | ForEach-Object {
+$teamRepos = $teams | ForEach-Object {
     $team = $_
 
-    Write-Host "Fetching members of team '$($team.name)'..." -ForegroundColor Blue
-    $teamMembers = GetTeamMembers -org $Org -team $team.slug -token $token
+    Write-Host "Fetching repositories of team '$($team.name)'..." -ForegroundColor Blue
+    $repos = GetTeamRepos -org $Org -team $team.slug -token $token
 
-    $teamMembers | ForEach-Object {
-        $teamMember = $_
+    $repos | ForEach-Object {
+        $repo = $_
 
         return [ordered]@{
-            slug_source_org = $teamMember.login
-            slug_target_org = "<CHANGE TO EMU USER SLUG>"
+            team_slug = $team.slug
+            team_repo = $repo.name
         }
     }
-} | Select-Object -Unique) | ForEach-Object {
-    $teamMemberEmail = GetTeamMemberDetails -teamMember $_.slug_source_org -token $token
-
-    if($teamMemberEmail.email -ne $null){
-        $new_slug = "$($teamMemberEmail.Split("@")[0].Replace(".", "-"))_emu"
-
-        $_.slug_target_org = $new_slug        
-    }else{
-        Write-Host "No publicaly visible email found for user '$($_.slug_source_org)'. Skipping..." -ForegroundColor Yellow
-    }
-
-    return $_
 }
 
-SaveTo-Csv -Data $slugMappings -OutputFile $OutputFile -Confirm $Confirm
+SaveTo-Csv -Data $teamRepos -OutputFile $OutputFile -Confirm $Confirm
 
 Write-Host "Done." -ForegroundColor Green
