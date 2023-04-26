@@ -89,3 +89,9 @@ function UpdateTeamRepoPermission($org, $team, $repo, $permission, $token){
         }
     }
 }
+
+function GetTeamMemberDetails($teamMember, $token){
+    $userApi = "https://api.github.com/users/$teamMember"
+
+    return Get -uri $userApi -token $token
+}

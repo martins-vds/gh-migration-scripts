@@ -44,9 +44,12 @@ $members = $teams | ForEach-Object {
     $teamMembers | ForEach-Object {
         $teamMember = $_
 
+        $teamMemberRole = GetTeamMemberRole -org $Org -team $team.slug -teamMember $teamMember.login -token $token
+
         return [ordered]@{
             team_slug = $team.slug
-            team_member_slug = $teamMember.login            
+            team_member_slug = $teamMember.login
+            team_member_role = $teamMemberRole.role      
         }
     }
 }

@@ -82,3 +82,17 @@ function GetRepoPublicyKey ($org, $repo, $token){
     $secretsApi="https://api.github.com/repos/$org/$repo/actions/secrets/public-key"
     return Get -uri $secretsApi -token $token
 }
+
+function DeleteRepo($org, $repo, $token){
+    try {
+        Delete -uri "https://api.github.com/repos/$org/$repo" -token $token | Out-Null             
+        Write-Host "Successfully deleted repo '$repo' from org '$org'." -ForegroundColor Green
+    }
+    catch [Microsoft.PowerShell.Commands.HttpResponseException] {
+        if ($_.Exception.Response.StatusCode -ne [System.Net.HttpStatusCode]::NotFound) {
+            throw
+        }
+
+        Write-Host "The repo '$repo' does not exist in org '$org'. No operation will be performed." -ForegroundColor Yellow
+    }
+}

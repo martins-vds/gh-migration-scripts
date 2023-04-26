@@ -35,7 +35,7 @@ if($teams.Length -eq 0){
     exit 0
 }
 
-$slugMappings = $teams | ForEach-Object {
+$slugMappings = @($teams | ForEach-Object {
     $team = $_
 
     Write-Host "Fetching members of team '$($team.name)'..." -ForegroundColor Blue
@@ -49,7 +49,19 @@ $slugMappings = $teams | ForEach-Object {
             slug_target_org = "<CHANGE TO EMU USER SLUG>"
         }
     }
-} | Select-Object -Unique
+} | Select-Object -Unique) | ForEach-Object {
+    $teamMemberEmail = GetTeamMemberDetails -teamMember $_.slug_source_org -token $token
+
+    if($teamMemberEmail.email -ne $null){
+        $new_slug = "$($teamMemberEmail.Split("@")[0].Replace(".", "-"))_emu"
+
+        $_.slug_target_org = $new_slug        
+    }
+
+    return $_
+}
+
+
 
 SaveTo-Csv -Data $slugMappings -OutputFile $OutputFile -Confirm $Confirm
 
