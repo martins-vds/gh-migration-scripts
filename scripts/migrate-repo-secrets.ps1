@@ -8,6 +8,9 @@ param (
     $TargetOrg,
     [Parameter(Mandatory = $false)]
     [System.IO.FileInfo]
+    $ReposFile,
+    [Parameter(Mandatory = $false)]
+    [System.IO.FileInfo]
     $SecretsFile,
     [Parameter(Mandatory = $false)]
     [string]
@@ -19,88 +22,8 @@ param (
 
 $ErrorActionPreference = 'Stop'
 
-. $PSScriptRoot\common.ps1
-
-function GetRepos ($org, $token) {
-    $page = 0
-    $reposApi="https://api.github.com/orgs/$org/repos?page={0}&per_page=100"
-    $allRepos = @()
-
-    do 
-    {    
-        $page += 1         
-        $repos = Get -uri "$($reposApi -f $page)" -token $token
-        $allRepos += $repos | Select-Object -Property id, name 
-    } while($repos.Length -gt 0)
-
-    return $allRepos
-}
-
-function GetRepo ($org, $repo, $token){
-    $secretsApi="https://api.github.com/repos/$org/$repo"
-
-    return Get -uri $secretsApi -token $token | Select-Object -Property id, name
-}
-
-function GetRepoSecrets ($org, $repo, $token){
-    $secretsApi="https://api.github.com/repos/$org/$repo/actions/secrets"
-
-    return @(Get -uri $secretsApi -token $token | Select-Object -ExpandProperty secrets)
-}
-
-function CreateRepoSecret ($org, $repo, $secretName, $secretValue, $token){
-    $secretsApi="https://api.github.com/repos/$org/$repo/actions/secrets/$secretName"
-    return Put -uri $secretsApi -token $token -body $secretValue
-}
-
-function GetRepoPublicyKey ($org, $repo, $token){
-    $secretsApi="https://api.github.com/repos/$org/$repo/actions/secrets/public-key"
-    return Get -uri $secretsApi -token $token
-}
-
-function GetEnvironments ($org, $repo, $token) {
-    $secretsApi="https://api.github.com/repos/$org/$repo/environments"
-    return @(Get -uri $secretsApi -token $token | Select-Object -ExpandProperty environments)
-}
-
-function GetEnvironmentSecrets($repoId, $environmentName, $token){
-    $secretsApi="https://api.github.com/repositories/$repoId/environments/$environmentName/secrets"
-    return @(Get -uri $secretsApi -token $token | Select-Object -ExpandProperty secrets)
-}
-
-function GetEnvironmentPublicyKey ($repoId, $environmentName, $token){
-    $secretsApi="https://api.github.com/repositories/$repoId/environments/$environmentName/secrets/public-key"
-    return Get -uri $secretsApi -token $token
-}
-
-function CreateEnvironment($org, $repo, $environmentName, $environment, $token){
-    $secretsApi="https://api.github.com/repos/$org/$repo/environments/$environmentName"
-    return Put -uri $secretsApi -token $token -body $environment
-}
-
-function CreateEnvironmentSecret ($repoId, $environmentName, $secretName, $secretValue, $token){
-    $secretsApi="https://api.github.com/repositories/$repoId/environments/$environmentName/secrets/$secretName"
-    return Put -uri $secretsApi -token $token -body $secretValue
-}
-
-function Migrate-Environment ($org, $repo, $environment, $token){
-    $newEnvironment = @{
-        deployment_branch_policy = $environment.deployment_branch_policy
-    }
-
-    $wait_timer = $environment.protection_rules | Where-Object -Property type -EQ wait_timer | Select-Object -ExpandProperty wait_timer
-    $reviewers = @($environment.protection_rules | Where-Object -Property type -EQ required_reviewers | Select-Object -ExpandProperty reviewers | Select-Object -Property type,@{Name='id'; Expression= {$_.reviewer.id}})
-
-    if($wait_timer){
-        $newEnvironment.wait_timer = $wait_timer
-    }
-
-    if($reviewers){
-        $newEnvironment.reviewers = $reviewers
-    }
-
-    CreateEnvironment -org $TargetOrg -repo $targetRepo.name -environmentName $environment.name -environment $newEnvironment -token $token | Out-Null
-}
+. $PSScriptRoot\common-repos.ps1
+. $PSScriptRoot\common-enviroments.ps1
 
 function GetSecretsFromFile($path){
     if($null -eq $path){
@@ -146,7 +69,7 @@ $targetPat = GetToken -token $TargetToken -envToken $env:GH_PAT
 $secrets = GetSecretsFromFile -path $SecretsFile
 
 Write-Host "Fetching repositories from org '$SourceOrg'..." -ForegroundColor White
-$sourceRepos = GetRepos -org $SourceOrg -token $sourcePat
+$sourceRepos = GetRepos -org $SourceOrg -token $sourcePat -path $ReposFile
 
 if($sourceRepos.Length -eq 0){
     Write-Host "No repositories found in organization '$SourceOrg'." -ForegroundColor Yellow
@@ -155,6 +78,11 @@ if($sourceRepos.Length -eq 0){
 
 $sourceRepos | ForEach-Object {
     $sourceRepo = $_
+
+    if(-Not(ExistsRepo -org $TargetOrg -repo $sourceRepo.name -token $targetPat)){
+        Write-Host "The repository '$($sourceRepo.name)' does not exist in org '$TargetOrg'. Skipping..." -ForegroundColor Yellow
+        return
+    }
 
     $sourceRepoSecrets = GetRepoSecrets -org $SourceOrg -repo $sourceRepo.name -token $sourcePat
 

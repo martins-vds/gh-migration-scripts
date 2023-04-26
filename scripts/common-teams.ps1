@@ -89,20 +89,3 @@ function UpdateTeamRepoPermission($org, $team, $repo, $permission, $token){
         }
     }
 }
-
-function ExistsRepo ($org, $repo, $token) {
-    $reposApi = "https://api.github.com/repos/$org/$repo"
-
-    try {
-        $repo = Get -uri $reposApi -token $token
-
-        return $true
-    }
-    catch [Microsoft.PowerShell.Commands.HttpResponseException] {
-        if ($_.Exception.Response.StatusCode -ne [System.Net.HttpStatusCode]::NotFound) {
-            throw
-        }
-
-        return $false
-    }
-}

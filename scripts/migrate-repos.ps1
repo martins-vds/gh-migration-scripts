@@ -38,7 +38,7 @@ param (
 
 $ErrorActionPreference = 'Stop'
 
-. $PSScriptRoot\common.ps1
+. $PSScriptRoot\common-repos.ps1
 
 function ExecAndGetMigrationID {
     param (
@@ -48,23 +48,6 @@ function ExecAndGetMigrationID {
         $_
     } | Select-String -Pattern "\(ID: (.+)\)" | ForEach-Object { $_.matches.groups[1].Value }
     return $MigrationID
-}
-
-function ExistsRepo ($org, $repo, $token) {
-    $reposApi = "https://api.github.com/repos/$org/$repo"
-
-    try {
-        $repo = Get -uri $reposApi -token $token
-
-        return $true
-    }
-    catch [Microsoft.PowerShell.Commands.HttpResponseException] {
-        if ($_.Exception.Response.StatusCode -ne [System.Net.HttpStatusCode]::NotFound) {
-            throw
-        }
-
-        return $false
-    }
 }
 
 $sourcePat = GetToken -token $SourceToken -envToken $env:GH_SOURCE_PAT

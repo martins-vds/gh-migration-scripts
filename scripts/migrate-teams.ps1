@@ -19,6 +19,7 @@ param (
 
 $ErrorActionPreference = 'Stop'
 
+. $PSScriptRoot\common-repos.ps1
 . $PSScriptRoot\common-teams.ps1
 
 function GetSlugMappings ($path) {
