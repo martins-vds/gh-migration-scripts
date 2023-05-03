@@ -6,6 +6,8 @@
 
 ## Overview
 
+The following scripts are meant to help extract metadata that can be helpful when prioritizing repositories and teams for GitHub to GitHub migration.
+
 |Script|Purpose|Example|
 |-|-|-|
 |get-repos.ps1|Fetch all repositories with their number of pull requests and issues|.\scripts\get-repos.ps1 -Org my-github-org -OutputFile .\repos.csv|
