@@ -2,7 +2,7 @@
 
 ## Documents
 
-- [Migration Plan](docs/Migration%20Plan%20v1.5.md)
+- [Migration Plan v1.5](docs/Migration%20Plan%20v1.5.md)
 
 ## Overview
 
