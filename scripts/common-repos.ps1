@@ -18,7 +18,7 @@ function ExistsRepo ($org, $repo, $token) {
 }
 
 function GetRepos ($org, $token, $path) {
-    if($path){
+    if ($path) {
         return GetReposFromFile -path $path
     }
     else {
@@ -28,21 +28,20 @@ function GetRepos ($org, $token, $path) {
 
 function GetReposFromApi ($org, $token) {
     $page = 0
-    $reposApi="https://api.github.com/orgs/$org/repos?page={0}&per_page=100"
+    $reposApi = "https://api.github.com/orgs/$org/repos?page={0}&per_page=100"
     $allRepos = @()
 
-    do 
-    {    
+    do {    
         $page += 1         
         $repos = Get -uri "$($reposApi -f $page)" -token $token
-        $allRepos += $repos | Select-Object -Property id, name 
-    } while($repos.Length -gt 0)
+        $allRepos += $repos | Select-Object -Property id, name, full_name, @{Name = "owner_slug"; Expression = { $_.owner.login } }, @{Name = "owner_type"; Expression = { $_.owner.type } }
+    } while ($repos.Length -gt 0)
 
     return $allRepos
 }
 
-function GetReposFromFile ($path){
-    if($null -eq $path){
+function GetReposFromFile ($path) {
+    if ($null -eq $path) {
         return @()
     }
 
@@ -61,29 +60,53 @@ function GetReposFromFile ($path){
     return @(Import-Csv -Path $path)
 }
 
-function GetRepo ($org, $repo, $token){
-    $secretsApi="https://api.github.com/repos/$org/$repo"
+function GetRepo ($org, $repo, $token) {
+    $secretsApi = "https://api.github.com/repos/$org/$repo"
 
     return Get -uri $secretsApi -token $token | Select-Object -Property id, name
 }
 
-function GetRepoSecrets ($org, $repo, $token){
-    $secretsApi="https://api.github.com/repos/$org/$repo/actions/secrets"
+function GetUserRepos ($path, $username, $token) {
+    if ($path) {
+        # return GetUserReposFromFile -path $path
+        return $()
+    }
+    else {
+        return GetUserReposFromApi -token $token
+    }
+}
+
+function GetUserReposFromApi ($username, $token) {
+    $page = 0
+    $reposApi = "https://api.github.com/users/$username/repos?&type=all&page={0}&per_page=100"
+    $allRepos = @()
+
+    do {    
+        $page += 1         
+        $repos = Get -uri "$($reposApi -f $page)" -token $token
+        $allRepos += $repos | Select-Object -Property id, name, full_name 
+    } while ($repos.Length -gt 0)
+
+    return $allRepos
+}
+
+function GetRepoSecrets ($org, $repo, $token) {
+    $secretsApi = "https://api.github.com/repos/$org/$repo/actions/secrets"
 
     return @(Get -uri $secretsApi -token $token | Select-Object -ExpandProperty secrets)
 }
 
-function CreateRepoSecret ($org, $repo, $secretName, $secretValue, $token){
-    $secretsApi="https://api.github.com/repos/$org/$repo/actions/secrets/$secretName"
+function CreateRepoSecret ($org, $repo, $secretName, $secretValue, $token) {
+    $secretsApi = "https://api.github.com/repos/$org/$repo/actions/secrets/$secretName"
     return Put -uri $secretsApi -token $token -body $secretValue
 }
 
-function GetRepoPublicyKey ($org, $repo, $token){
-    $secretsApi="https://api.github.com/repos/$org/$repo/actions/secrets/public-key"
+function GetRepoPublicyKey ($org, $repo, $token) {
+    $secretsApi = "https://api.github.com/repos/$org/$repo/actions/secrets/public-key"
     return Get -uri $secretsApi -token $token
 }
 
-function DeleteRepo($org, $repo, $token){
+function DeleteRepo($org, $repo, $token) {
     try {
         Delete -uri "https://api.github.com/repos/$org/$repo" -token $token | Out-Null             
         Write-Host "Successfully deleted repo '$repo' from org '$org'." -ForegroundColor Green

@@ -23,7 +23,6 @@ param (
 
 $ErrorActionPreference = 'Stop'
 
-. $PSScriptRoot\common-users.ps1
 . $PSScriptRoot\common-orgs.ps1
 
 $token= GetToken -token $Token -envToken $env:GH_PAT
@@ -36,27 +35,16 @@ if($members.Length -eq 0){
     exit 0
 }
 
-$slugMappings = @($members | ForEach-Object {
+$members | ForEach-Object {
     $member = $_
 
+    $membership = GetOrgUserMembership -org $Org -member $member.login -token $token
+
     return [ordered]@{
-        slug_source_org = $member.login
-        slug_target_org = "<CHANGE TO EMU USER SLUG>"
+        org_member_slug = $member.login
+        org_member_role = $membership.role
+        org_member_state = $membership.state    
     }
-}) | ForEach-Object {
-    $teamMemberEmail = GetUserDetails -username $_.slug_source_org -token $token
-
-    if($teamMemberEmail.email -ne $null){
-        $new_slug = "$($teamMemberEmail.Split("@")[0].Replace(".", "-"))_emu"
-
-        $_.slug_target_org = $new_slug        
-    }else{
-        Write-Host "No publicaly visible email found for user '$($_.slug_source_org)'. Skipping..." -ForegroundColor Yellow
-    }
-
-    return $_
-}
-
-SaveTo-Csv -Data $slugMappings -OutputFile $OutputFile -Confirm $Confirm
+} | SaveTo-Csv -OutputFile $OutputFile -Confirm $Confirm
 
 Write-Host "Done." -ForegroundColor Green

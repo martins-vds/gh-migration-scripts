@@ -23,22 +23,7 @@ param (
 
 $ErrorActionPreference = 'Stop'
 
-. $PSScriptRoot\common.ps1
-
-function GetRepos ($org, $token) {
-    $page = 0
-    $reposApi="https://api.github.com/orgs/$org/repos?page={0}&per_page=100"
-    $allRepos = @()
-
-    do 
-    {    
-        $page += 1         
-        $repos = Get -uri "$($reposApi -f $page)" -token $token
-        $allRepos += $repos | Select-Object -Property id, name
-    } while($repos.Length -gt 0)
-
-    return $allRepos
-}
+. $PSScriptRoot\common-repos.ps1
 
 function CountIssues ($org, $repo, $token) {
     $page = 0
@@ -87,7 +72,7 @@ function CountPullRequests ($org, $repo, $token) {
 $token= GetToken -token $Token -envToken $env:GH_PAT
 
 Write-Host "Fetching repos from organization '$Org'..." -ForegroundColor Blue
-$repos = GetRepos -org $Org -token $token
+$repos = GetReposFromApi -org $Org -token $token
 
 if($repos.Length -eq 0){
     Write-Host "No repos found in organization '$Org'." -ForegroundColor Yellow
@@ -106,6 +91,8 @@ $reposWithMetrics = $repos | ForEach-Object {
         id = $repo.id
         org = $Org
         name = $repo.name
+        owner_slug = $repo.owner_slug
+        owner_type = $repo.owner_type
         issues = $issuesCount
         pull_requests = $pullRequestsCount
     }

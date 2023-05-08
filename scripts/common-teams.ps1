@@ -37,7 +37,7 @@ function AddTeamToParent ($org, $team, $parent, $token) {
     Patch -uri $teamsApi -body $body -token $token | Out-Null
 }
 
-function GetTeamMembers ($org, $team, $token){
+function GetTeamMembers ($org, $team, $token) {
     $teamsApi = "https://api.github.com/orgs/$org/teams/$team/members?page={0}&per_page=100"
     $allMembers = @()
     $page = 0
@@ -51,19 +51,19 @@ function GetTeamMembers ($org, $team, $token){
     return $allMembers
 }
 
-function GetTeamMemberRole ($org, $team, $teamMember, $token){
+function GetTeamMemberRole ($org, $team, $teamMember, $token) {
     $teamsApi = "https://api.github.com/orgs/$org/teams/$team/memberships/$teamMember"
     
     return Get -uri $teamsApi -token $token | Select-Object -Property role
 }
 
-function UpdateTeamMemberRole($org, $team, $teamMember, $role, $token){
+function UpdateTeamMemberRole($org, $team, $teamMember, $role, $token) {
     $teamsApi = "https://api.github.com/orgs/$org/teams/$team/memberships/$teamMember"
 
     Put -uri $teamsApi -body $role -token $token | Out-Null
 }
 
-function GetTeamRepos ($org, $team, $token){
+function GetTeamRepos ($org, $team, $token) {
     $teamsApi = "https://api.github.com/orgs/$org/teams/$team/repos?page={0}&per_page=100"
     $allRepos = @()
     $page = 0
@@ -77,7 +77,7 @@ function GetTeamRepos ($org, $team, $token){
     return $allRepos
 }
 
-function UpdateTeamRepoPermission($org, $team, $repo, $permission, $token){
+function UpdateTeamRepoPermission($org, $team, $repo, $permission, $token) {
     $teamsApi = "https://api.github.com/orgs/$org/teams/$team/repos/$repo"
 
     try {
@@ -88,10 +88,4 @@ function UpdateTeamRepoPermission($org, $team, $repo, $permission, $token){
             Write-Host "       Failed to update team repository permission '$($permission)' for team '$org/$team'. Repo '$repo' doesn't exist."
         }
     }
-}
-
-function GetTeamMemberDetails($teamMember, $token){
-    $userApi = "https://api.github.com/users/$teamMember"
-
-    return Get -uri $userApi -token $token
 }
