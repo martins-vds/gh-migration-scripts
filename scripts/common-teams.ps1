@@ -60,6 +60,8 @@ function GetTeamMemberRole ($org, $team, $teamMember, $token) {
 function UpdateTeamMemberRole($org, $team, $teamMember, $role, $token) {
     $teamsApi = "https://api.github.com/orgs/$org/teams/$team/memberships/$teamMember"
 
+    Write-Verbose "Updating team member role '$($role)' for team '$org/$team' and team member '$teamMember'..."
+
     Put -uri $teamsApi -body $role -token $token | Out-Null
 }
 
