@@ -44,10 +44,10 @@ $slugMappings = @($members | ForEach-Object {
         slug_target_org = "<CHANGE TO EMU USER SLUG>"
     }
 }) | ForEach-Object {
-    $teamMemberEmail = GetUserDetails -username $_.slug_source_org -token $token
+    $teamMemberDetails = GetUserDetails -username $_.slug_source_org -token $token
 
-    if($teamMemberEmail.email -ne $null){
-        $new_slug = "$($teamMemberEmail.Split("@")[0].Replace(".", "-"))_emu"
+    if($teamMemberDetails.email -ne $null){
+        $new_slug = "$($teamMemberDetails.email.Split("@")[0].Replace(".", "-"))_emu"
 
         $_.slug_target_org = $new_slug        
     }else{
