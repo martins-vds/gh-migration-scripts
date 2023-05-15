@@ -41,7 +41,7 @@ $slugMappings = @($members | ForEach-Object {
 
     return [ordered]@{
         slug_source_org = $member.login
-        slug_target_org = "<CHANGE TO EMU USER SLUG>"
+        slug_target_org = ""
     }
 }) | ForEach-Object {
     $teamMemberDetails = GetUserDetails -username $_.slug_source_org -token $token
@@ -55,7 +55,7 @@ $slugMappings = @($members | ForEach-Object {
     }
 
     return $_
-}
+} | Sort-Object -Property slug_source_org
 
 SaveTo-Csv -Data $slugMappings -OutputFile $OutputFile -Confirm $Confirm
 
