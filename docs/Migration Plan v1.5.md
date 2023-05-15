@@ -128,7 +128,7 @@ MSI installers are available for download on the [releases page](https://github
     .\scripts\setup-nuget.ps1
     ```
 
-3. Close and reopen PowerShell (recommend opening with elevated Admin permissions) to ensure the PATH is updated
+3. Close and reopen PowerShell (recommend opening with elevated Admin permissions) to ensure the PATH is updated and available.
 
 ## Step 9: Set environment variables
 
@@ -136,8 +136,11 @@ Before you can use the GEI extension to migrate to GitHub Enterprise Cloud, you 
 
 > See [**Appendix: Create Personal Access Tokens**](#create-personal-access-tokens) for instructions
 
-1. Create and record a personal access token that meets all the requirements to authenticate for the source organization for organization migrations.
+1. Create and record a personal access token that meets all the requirements to authenticate for the 
+source organization for organization migrations.
+
 2. Create and record a personal access token (classic) that meets all the requirements to authenticate for the destination enterprise for organization migrations.
+
 3. Set environment variables for the personal access tokens (classic), replacing **TOKEN** in the commands below with the personal access tokens (classic) you recorded above. Use GH_PAT for the destination enterprise and GH_SOURCE_PAT for the source organization.
    - Using PowerShell, use the `$env` command.
 
@@ -145,6 +148,8 @@ Before you can use the GEI extension to migrate to GitHub Enterprise Cloud, you 
     [Environment]::SetEnvironmentVariable("GH_SOURCE_PAT", "TOKEN", [EnvironmentVariableTarget]::User);
     [Environment]::SetEnvironmentVariable("GH_PAT", "TOKEN", [EnvironmentVariableTarget]::User);
     ```
+
+4. Close and reopen PowerShell (recommend opening with elevated Admin permissions) to ensure the GH_PAT and GH_SOURCE_PAT environment variables are updated and available.
 
 ## Step 10: Migrate your organization
 
