@@ -106,10 +106,10 @@ MSI installers are available for download on the [releases page](https://github
 
 1. Open PowerShell (recommend opening with elevated Admin permissions)
 2. Change the current working directory to the location where you want the cloned directory.
-3. Type `git clone https://github.com/martins-vds/goa-gh-migration.git`
+3. Type `git clone https://github.com/martins-vds/gh-migration-scripts`
 
     ```posh
-    git clone https://github.com/martins-vds/goa-gh-migration.git
+    git clone https://github.com/martins-vds/gh-migration-scripts
     ```
 
 4. Press Enter to create your local clone.
