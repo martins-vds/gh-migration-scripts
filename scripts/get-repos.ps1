@@ -69,7 +69,7 @@ function CountPullRequests ($org, $repo, $token) {
     return $pullRequestCount
 }
 
-$token= GetToken -token $Token -envToken $env:GH_PAT
+$token= GetToken -token $Token -envToken $env:GH_SOURCE_PAT
 
 Write-Host "Fetching repos from organization '$Org'..." -ForegroundColor Blue
 $repos = GetReposFromApi -org $Org -token $token
