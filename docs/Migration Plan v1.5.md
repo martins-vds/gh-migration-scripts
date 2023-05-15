@@ -119,7 +119,7 @@ MSI installers are available for download on the [releases page](https://github
 1. In PowerShell (recommend opening with elevated Admin permissions), change the current working directory to the cloned directory
 
     ```posh
-    cd goa-gh-migration
+    cd gh-migration-scripts
     ```
 
 2. In PowerShell, run the script `setup-nuget.ps1`:
@@ -167,7 +167,7 @@ Replace the placeholders in the command above with the following values.
 1. In PowerShell (recommend opening with elevated Admin permissions), change the current working directory to the cloned directory
 
     ```posh
-    cd goa-gh-migration
+    cd gh-migration-scripts
     ```
 
 2. To migrate Nuget packages, run the script `migrate-nuget-packages.ps1` under the `scripts` folder.
