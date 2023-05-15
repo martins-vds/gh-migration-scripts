@@ -60,9 +60,16 @@ function GetTeamMemberRole ($org, $team, $teamMember, $token) {
 function UpdateTeamMemberRole($org, $team, $teamMember, $role, $token) {
     $teamsApi = "https://api.github.com/orgs/$org/teams/$team/memberships/$teamMember"
 
-    Write-Verbose "Updating team member role '$($role)' for team '$org/$team' and team member '$teamMember'..."
+    Write-Verbose "Updating team member role '$($role.role)' for team '$org/$team' and team member '$teamMember'..."
 
-    Put -uri $teamsApi -body $role -token $token | Out-Null
+    try {
+        Put -uri $teamsApi -body $role -token $token | Out-Null
+    }
+    catch [Microsoft.PowerShell.Commands.HttpResponseException] {
+        if ($_.Exception.Response.StatusCode -eq [System.Net.HttpStatusCode]::NotFound) {
+            Write-Host "Failed to update team member role '$($role.role)' for team '$org/$team'. Team member '$teamMember' doesn't exist." -ForegroundColor Red
+        }
+    }
 }
 
 function GetTeamRepos ($org, $team, $token) {
@@ -87,7 +94,7 @@ function UpdateTeamRepoPermission($org, $team, $repo, $permission, $token) {
     }
     catch [Microsoft.PowerShell.Commands.HttpResponseException] {
         if ($_.Exception.Response.StatusCode -eq [System.Net.HttpStatusCode]::NotFound) {
-            Write-Host "       Failed to update team repository permission '$($permission)' for team '$org/$team'. Repo '$repo' doesn't exist."
+            Write-Host "       Failed to update team repository permission '$($permission)' for team '$org/$team'. Repo '$repo' doesn't exist." -ForegroundColor Red
         }
     }
 }
