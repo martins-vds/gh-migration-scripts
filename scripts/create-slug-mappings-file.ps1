@@ -26,7 +26,7 @@ $ErrorActionPreference = 'Stop'
 . $PSScriptRoot\common-users.ps1
 . $PSScriptRoot\common-orgs.ps1
 
-$token= GetToken -token $Token -envToken $env:GH_PAT
+$token = GetToken -token $Token -envToken $env:GH_SOURCE_PAT
 
 Write-Host "Fetching members from organization '$Org'..." -ForegroundColor Blue
 $members = GetOrgMembers -org $Org -token $token
