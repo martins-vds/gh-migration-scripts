@@ -128,6 +128,8 @@ MSI installers are available for download on the [releases page](https://github
     .\scripts\setup-nuget.ps1
     ```
 
+3. Close and reopen PowerShell (recommend opening with elevated Admin permissions) to ensure the PATH is updated
+
 ## Step 9: Set environment variables
 
 Before you can use the GEI extension to migrate to GitHub Enterprise Cloud, you must create personal access tokens (classic) that can access the source organization and destination enterprise, then set the personal access tokens (classic) as environment variables.
