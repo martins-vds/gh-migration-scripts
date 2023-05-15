@@ -5,7 +5,8 @@ function GetOrgMembers ($org, $token) {
     $allMembers = @()
     $page = 0
 
-    do {    
+    do {
+        Write-Verbose "Fetching page $page of members from organization '$org'..."
         $page += 1  
         $members = Get -uri "$($orgsApi -f $page)" -token $token
         $allMembers += $members
