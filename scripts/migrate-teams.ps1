@@ -14,7 +14,10 @@ param (
     $SourceToken,
     [Parameter(Mandatory = $false)]
     [string]
-    $TargetToken
+    $TargetToken,
+    [Parameter(Mandatory = $false)]
+    [switch]
+    $SkipEmptySlugMappings
 )
 
 $ErrorActionPreference = 'Stop'
@@ -95,11 +98,16 @@ $sourceTeams | ForEach-Object {
         
         $targetTeamMemberSlug = $slugMappings | Where-Object -Property slug_source_org -EQ -Value $sourceTeamMember.login | Select-Object -First 1 -ExpandProperty slug_target_org
 
-        if ([string]::IsNullOrWhiteSpace($targetTeamMemberSlug)) {
-            $targetTeamMemberSlug = $sourceTeamMember.login
-        }
+        if(-Not($SkipEmptySlugMappings) -or -Not([string]::IsNullOrWhiteSpace($targetTeamMemberSlug))) {
 
-        UpdateTeamMemberRole -org $TargetOrg -team $targetTeam.slug -teamMember $targetTeamMemberSlug -role $sourceTeamMemberRole -token $targetPat
+            if ([string]::IsNullOrWhiteSpace($targetTeamMemberSlug)) {
+                $targetTeamMemberSlug = $sourceTeamMember.login
+            }
+
+            UpdateTeamMemberRole -org $TargetOrg -team $targetTeam.slug -teamMember $targetTeamMemberSlug -role $sourceTeamMemberRole -token $targetPat
+        }else{
+            Write-Host "The team member '$($sourceTeamMember.login)' cannot be added to team '$($targetTeam.name)' in org '$TargetOrg'. The slug mapping is empty." -ForegroundColor Yellow
+        }
     }
 }
 
