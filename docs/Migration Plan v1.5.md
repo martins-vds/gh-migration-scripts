@@ -18,6 +18,7 @@
   - [Step 12: Reclaim mannequins](#step-12-reclaim-mannequins)
   - [Appendix](#appendix)
     - [Create Personal Access Tokens](#create-personal-access-tokens)
+    - [Authorizing a personal access token for use with SAML single sign-on](#authorizing-a-personal-access-token-for-use-with-saml-single-sign-on)
 
 ## Prerequisites
 
@@ -136,7 +137,7 @@ Before you can use the GEI extension to migrate to GitHub Enterprise Cloud, you 
 
 > See [**Appendix: Create Personal Access Tokens**](#create-personal-access-tokens) for instructions
 
-1. Create and record a personal access token that meets all the requirements to authenticate for the 
+1. Create and record a personal access token that meets all the requirements to authenticate for the
 source organization for organization migrations.
 
 2. Create and record a personal access token (classic) that meets all the requirements to authenticate for the destination enterprise for organization migrations.
@@ -279,5 +280,15 @@ Replace the placeholders in the command above with the following values.
    - `admin:org`
    - `read:org`
    - `read:enterprise`
+   - `delete_repo`
 8. Click **Generate token**.
 9. Copy the token and save it for later
+10. If your organization requires SAML single sign-on for authentication, you must authorize your personal access token for use with SAML single sign-on. For more information, see [**Authorizing a personal access token for use with SAML single sign-on**](#authorizing-a-personal-access-token-for-use-with-saml-single-sign-on).
+
+### Authorizing a personal access token for use with SAML single sign-on
+
+1. In the upper-right corner of any page, click your profile photo, then click **Settings**.
+2. In the left sidebar, click **Developer settings**.
+3. In the left sidebar, click **Personal access tokens**.
+4. Next to the token you'd like to authorize, click **Configure SSO**. If you don't see Configure SSO, ensure that you have authenticated at least once through your SAML IdP to access resources on GitHub.com
+5. In the dropdown menu, to the right of the organization you'd like to authorize the token for, click **Authorize**.
