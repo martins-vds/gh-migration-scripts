@@ -96,7 +96,7 @@ $reposWithMetrics = $repos | ForEach-Object {
         issues = $issuesCount
         pull_requests = $pullRequestsCount
     }
-}
+} | Sort-Object -Property org, name
 
 SaveTo-Csv -Data $reposWithMetrics -OutputFile $OutputFile -Confirm $Confirm
 

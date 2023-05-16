@@ -8,6 +8,10 @@ inputs:
   secrets-prefix:
     required: true
     description: ''
+  secrets-type:
+    required: false
+    default: 'org'
+    description: ''
   environment-name:
     required: false
     default: ''

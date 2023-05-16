@@ -22,11 +22,15 @@ param (
     [Parameter(Mandatory = $false)]    
     [ValidateNotNull()]
     [string]
-    $EnvironmentName = ""
+    $EnvironmentName = "",
+    [Parameter(Mandatory = $false)]
+    [ValidateSet( "org", "repo", "env")]
+    [string]
+    $SecretsType = "org"
 )
 
 $RepoName -match "^(?<owner>[^/]+)/(?<repo>.+)$" | Out-Null
-$org, $repo = $Matches.owner, $Matches.repo
+$owner, $repo = $Matches.owner, $Matches.repo
 
 $secrets = @(Get-ChildItem -Path Env:$($SecretsPrefix)* | Sort-Object Name | ForEach-Object {
     if([string]::IsNullOrWhiteSpace($SecretsPrefix)){
@@ -36,13 +40,31 @@ $secrets = @(Get-ChildItem -Path Env:$($SecretsPrefix)* | Sort-Object Name | For
     }
     $secret_name = $secret_name.Trim('_')
 
-    return [ordered] @{
-        org = $org
-        repo = $repo
-        environment_name = $EnvironmentName.ToLowerInvariant()
+    $secret = [ordered] @{
+        owner = $owner
+        repo = ""
+        environment_name = ""
         secret_name = $secret_name
         secret_value = $_.Value
+        secret_type = $SecretsType
     }
+
+    if($SecretsType -eq "org"){
+        $secret.repo = ""
+        $secret.environment_name = ""
+    }
+
+    if($SecretsType -eq "repo"){
+        $secret.repo = $repo
+        $secret.environment_name = ""
+    }
+
+    if($SecretsType -eq "env"){
+        $secret.repo = $repo
+        $secret.environment_name = $EnvironmentName.ToLowerInvariant()
+    }
+
+    return $secret
 })
 
 if($secrets.Length -eq 0){

@@ -115,6 +115,7 @@ $executionDuration = Measure-Command {
         }
 
         $reposToMigrate | Foreach-Object -Parallel {
+            
             $repoName = $_.name
 
             $sourcePat = $using:sourcePat

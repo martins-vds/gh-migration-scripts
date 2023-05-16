@@ -7,6 +7,9 @@ param (
     [ValidateNotNullOrEmpty()]
     $TargetOrg,
     [Parameter(Mandatory = $false)]
+    [System.IO.FileInfo]
+    $SecretsFile,
+    [Parameter(Mandatory = $false)]
     [string]
     $SourceToken,
     [Parameter(Mandatory = $false)]
@@ -33,10 +36,46 @@ function GetPublicyKey ($org, $token){
     return Get -uri $secretsApi -token $token
 }
 
+function GetSecretsFromFile($path){
+    if($null -eq $path){
+        return @()
+    }
+
+    if (-Not ($path | Test-Path) ) {
+        throw "File or folder does not exist"
+    }
+
+    if (-Not ($path | Test-Path -PathType Leaf) ) {
+        throw "The SecretsFile argument must be a file. Folder paths are not allowed."
+    }
+
+    if ($path -notmatch "(\.csv$)") {
+        throw "The file specified in the SecretsFile argument must be of type csv"
+    }
+
+    return @(Import-Csv -Path $path)
+}
+
+function GetSecretOrDefault($secrets, $org, $secretKey, $default){
+    $secretValue = $secrets | `
+                    Where-Object -Property owner -EQ -Value $org | `
+                    Where-Object -Property secret_type -EQ -Value 'org' | `
+                    Where-Object -Property secret_name -EQ $secretKey | `
+                    Select-Object -First 1
+
+    if($secretValue){
+        return $secretValue
+    }else{
+        return $default
+    }
+}
+
 Import-Module PSSodium
 
 $sourcePat = GetToken -token $SourceToken -envToken $env:GH_SOURCE_PAT
 $targetPat = GetToken -token $TargetToken -envToken $env:GH_PAT
+
+$secrets = GetSecretsFromFile -path $SecretsFile
 
 $sourceOrgSecrets = GetOrgSecrets -org $SourceOrg -token $sourcePat
 
@@ -47,12 +86,13 @@ if($sourceOrgSecrets.Length -gt 0){
 
     $sourceOrgSecrets | ForEach-Object {
         $secret = $_
-    
+        $secretValue = GetSecretOrDefault -secrets $secrets -org $SourceOrg -secretKey $secret.name -secretType 'org' -default "CHANGE_ME"
+
         $newSecret = @{
             org = $TargetOrg
             secret_name = $secret.name
             visibility = $secret.visibility
-            encrypted_value = ConvertTo-SodiumEncryptedString -Text "CHANGE_ME" -PublicKey $targetPubKey.key
+            encrypted_value = ConvertTo-SodiumEncryptedString -Text $secretValue -PublicKey $targetPubKey.key
             key_id = $targetPubKey.key_id
             selected_repository_ids = @()
         }
