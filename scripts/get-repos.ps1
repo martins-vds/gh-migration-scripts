@@ -27,7 +27,7 @@ $ErrorActionPreference = 'Stop'
 
 function CountIssues ($org, $repo, $token) {
     $page = 0
-    $repoIssuesApi="https://api.github.com/orgs/$org/$repo/issues?page={0}&per_page=100"
+    $repoIssuesApi="https://api.github.com/repos/$org/$repo/issues?page={0}&per_page=100"
     $issuesCount = 0
 
     do 
@@ -49,7 +49,7 @@ function CountIssues ($org, $repo, $token) {
 
 function CountPullRequests ($org, $repo, $token) {
     $page = 0
-    $repoPullRequestsApi="https://api.github.com/orgs/$org/$repo/pulls?page={0}&per_page=100"
+    $repoPullRequestsApi="https://api.github.com/repos/$org/$repo/pulls?page={0}&per_page=100"
     $pullRequestCount = 0
 
     do 

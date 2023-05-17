@@ -65,7 +65,7 @@ function GetSecretOrDefault($secrets, $org, $secretKey, $default){
 
     if($secretValue){
         return $secretValue
-    }else{
+    }else{        
         return $default
     }
 }
@@ -76,6 +76,7 @@ $sourcePat = GetToken -token $SourceToken -envToken $env:GH_SOURCE_PAT
 $targetPat = GetToken -token $TargetToken -envToken $env:GH_PAT
 
 $secrets = GetSecretsFromFile -path $SecretsFile
+$defaultSecretValue = "CHANGE_ME"
 
 $sourceOrgSecrets = GetOrgSecrets -org $SourceOrg -token $sourcePat
 
@@ -86,7 +87,11 @@ if($sourceOrgSecrets.Length -gt 0){
 
     $sourceOrgSecrets | ForEach-Object {
         $secret = $_
-        $secretValue = GetSecretOrDefault -secrets $secrets -org $SourceOrg -secretKey $secret.name -secretType 'org' -default "CHANGE_ME"
+        $secretValue = GetSecretOrDefault -secrets $secrets -org $SourceOrg -secretKey $secret.name -secretType 'org' -default $defaultSecretValue
+
+        if($secretValue -eq $defaultSecretValue){
+            Write-Host "Secret '$($secret.name)' not found in secrets file. Using default value '$defaultSecretValue'." -ForegroundColor Yellow
+        }
 
         $newSecret = @{
             org = $TargetOrg
