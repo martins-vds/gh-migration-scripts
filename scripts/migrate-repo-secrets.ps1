@@ -25,8 +25,8 @@ $ErrorActionPreference = 'Stop'
 . $PSScriptRoot\common-repos.ps1
 . $PSScriptRoot\common-enviroments.ps1
 
-function GetSecretsFromFile($path){
-    if($null -eq $path){
+function GetSecretsFromFile($path) {
+    if ($null -eq $path) {
         return @()
     }
 
@@ -45,16 +45,18 @@ function GetSecretsFromFile($path){
     return @(Import-Csv -Path $path)
 }
 
-function GetSecretOrDefault($secrets, $repo, $environment, $secretKey, $default){
+function GetSecretOrDefault($secrets, $repo, $environment, $secretKey, $secretType, $default) {
     $secretValue = $secrets | `
-                    Where-Object -Property repo -EQ -Value $repo | `
-                    Where-Object -Property environment -EQ $environment | `
-                    Where-Object -Property secret_name -EQ $secretKey | `
-                    Select-Object -First 1
+        Where-Object -Property repo -EQ -Value $repo | `
+        Where-Object -Property environment -EQ $environment | `
+        Where-Object -Property secret_name -EQ $secretKey | `
+        Where-Object -Property secret_type -EQ $secretType | `
+        Select-Object -First 1
 
-    if($secretValue){
+    if ($secretValue) {
         return $secretValue
-    }else{
+    }
+    else {
         return $default
     }
 }
@@ -67,11 +69,12 @@ $sourcePat = GetToken -token $SourceToken -envToken $env:GH_SOURCE_PAT
 $targetPat = GetToken -token $TargetToken -envToken $env:GH_PAT
 
 $secrets = GetSecretsFromFile -path $SecretsFile
+$defaultSecretValue = "CHANGE_ME"
 
 Write-Host "Fetching repositories from org '$SourceOrg'..." -ForegroundColor White
 $sourceRepos = GetRepos -org $SourceOrg -token $sourcePat -path $ReposFile
 
-if($sourceRepos.Length -eq 0){
+if ($sourceRepos.Length -eq 0) {
     Write-Host "No repositories found in organization '$SourceOrg'." -ForegroundColor Yellow
     exit 0
 }
@@ -79,30 +82,35 @@ if($sourceRepos.Length -eq 0){
 $sourceRepos | ForEach-Object {
     $sourceRepo = $_
 
-    if(-Not(ExistsRepo -org $TargetOrg -repo $sourceRepo.name -token $targetPat)){
+    if (-Not(ExistsRepo -org $TargetOrg -repo $sourceRepo.name -token $targetPat)) {
         Write-Host "The repository '$($sourceRepo.name)' does not exist in org '$TargetOrg'. Skipping..." -ForegroundColor Yellow
         return
     }
 
     $sourceRepoSecrets = GetRepoSecrets -org $SourceOrg -repo $sourceRepo.name -token $sourcePat
 
-    if($sourceRepoSecrets.Length -gt 0){
+    if ($sourceRepoSecrets.Length -gt 0) {
         Write-Host "Migrating repository secrets from repo '$SourceOrg/$($sourceRepo.name)' to '$TargetOrg/$($sourceRepo.name)'..." -ForegroundColor White
         
         $targetRepoPubKey = GetRepoPublicyKey -org $TargetOrg -repo $sourceRepo.name -token $targetPat
         
-        $sourceRepoSecrets | ForEach-Object{
+        $sourceRepoSecrets | ForEach-Object {
             $sourceRepoSecret = $_
-            $sourceRepoSecretValue = GetSecretOrDefault -secrets $secrets -repo $sourceRepo.name -environment "" -secretKey $sourceRepoSecret.name -default "CHANGE_ME"
+            $sourceRepoSecretValue = GetSecretOrDefault -secrets $secrets -repo $sourceRepo.name -environment "" -secretKey $sourceRepoSecret.name -secretType 'repo' -default $defaultSecretValue
+
+            if ($sourceRepoSecretValue -eq $defaultSecretValue) {
+                Write-Host "   Secret '$($sourceRepoSecret.name)' not found in secrets file. Using default value '$defaultSecretValue'." -ForegroundColor Yellow
+            }
 
             $newTargetRepoSecret = @{            
                 encrypted_value = ConvertTo-SodiumEncryptedString -Text $sourceRepoSecretValue -PublicKey $targetRepoPubKey.key
-                key_id = $targetRepoPubKey.key_id
+                key_id          = $targetRepoPubKey.key_id
             }
     
             CreateRepoSecret -org $TargetOrg -repo $sourceRepo.name -secretName $sourceRepoSecret.name -secretValue $newTargetRepoSecret -token $targetPat
         }
-    }else{
+    }
+    else {
         Write-Host "Repo '$SourceOrg/$($sourceRepo.name)' has no repository secrets." -ForegroundColor Yellow
     }
 
@@ -113,7 +121,7 @@ $sourceRepos | ForEach-Object {
 
         $sourceRepoEnvironmentSecrets = GetEnvironmentSecrets -repoId $sourceRepo.id -environmentName $sourceRepoEnvironment.name -token $sourcePat
 
-        if($sourceRepoEnvironmentSecrets.Length -gt 0){
+        if ($sourceRepoEnvironmentSecrets.Length -gt 0) {
             Write-Host "  Migrating environment secrets from environment '$SourceOrg/$($sourceRepo.name)/$($sourceRepoEnvironment.name)' to environment '$TargetOrg/$($sourceRepo.name)/$($sourceRepoEnvironment.name)'..." -ForegroundColor White
             
             $targetRepo = GetRepo -org $TargetOrg -repo $sourceRepo.name -token $targetPat
@@ -124,16 +132,21 @@ $sourceRepos | ForEach-Object {
 
             $sourceRepoEnvironmentSecrets | ForEach-Object {
                 $sourceRepoEnvironmentSecret = $_
-                $sourceRepoEnvironmentSecretValue = GetSecretOrDefault -secrets $secrets -repo $sourceRepo.name -environment $sourceRepoEnvironment.name -secretKey $sourceRepoEnvironmentSecret.name -default "CHANGE_ME"
+                $sourceRepoEnvironmentSecretValue = GetSecretOrDefault -secrets $secrets -repo $sourceRepo.name -environment $sourceRepoEnvironment.name -secretKey $sourceRepoEnvironmentSecret.name -secretType 'env' -default $defaultSecretValue
+
+                if ($sourceRepoEnvironmentSecretValue -eq $defaultSecretValue) {
+                    Write-Host "   Secret '$($sourceRepoEnvironmentSecret.name)' not found in secrets file. Using default value '$defaultSecretValue'." -ForegroundColor Yellow
+                }
 
                 $newTargetRepoEnvironmentSecret = @{
                     encrypted_value = ConvertTo-SodiumEncryptedString -Text $sourceRepoEnvironmentSecretValue -PublicKey $targetRepoEnvironmentPublicKey.key
-                    key_id = $targetRepoEnvironmentPublicKey.key_id
+                    key_id          = $targetRepoEnvironmentPublicKey.key_id
                 }
 
                 CreateEnvironmentSecret -repoId $targetRepo.id -environmentName $sourceRepoEnvironment.name -secretName $sourceRepoEnvironmentSecret.name -secretValue $newTargetRepoEnvironmentSecret -token $targetPat
             }
-        }else{
+        }
+        else {
             Write-Host "  Repo '$SourceOrg/$($sourceRepo.name)' has no environment secrets." -ForegroundColor Yellow
         }
     }
