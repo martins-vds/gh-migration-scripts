@@ -33,8 +33,9 @@ function GetToken ($token, $envToken) {
 
 function BuildHeaders ($token) {
     $headers = @{
-        Accept        = "application/vnd.github+json"
-        Authorization = "Bearer $token"
+        Accept                 = "application/vnd.github+json"
+        Authorization          = "Bearer $token"
+        "X-GitHub-Api-Version" = "2022-11-28"
     }
 
     return $headers
@@ -60,7 +61,11 @@ function Delete ($uri, $token) {
     return Invoke-RestMethod -Uri $uri -Method Delete -Headers @{"Authorization" = "token $token" }
 }
 
-
+function EnsureDirectoryExists($outputDirectory) {
+    if (-Not (Test-Path -Path $outputDirectory)) {
+        New-Item -Path $outputDirectory -ItemType Directory -Force | Out-Null
+    }
+}
 
 function SaveTo-Csv(
     [Parameter(Mandatory, ValueFromPipeline)]
@@ -82,5 +87,28 @@ function SaveTo-Csv(
     }
     else {
         $Data | Export-Csv -Path $OutputFile -Force -UseQuotes AsNeeded -NoTypeInformation -Encoding utf8
+    }
+}
+
+function SaveTo-Json(
+    [Parameter(Mandatory, ValueFromPipeline)]
+    $Data, 
+    [Parameter(Mandatory)]
+    $OutputFile,
+    [bool]$Confirm) {
+    if (Test-Path -Path $OutputFile) {
+        if ($Confirm) {
+            $Data | ConvertTo-Json -Depth 100 | Out-File -FilePath $OutputFile -Encoding utf8
+        }
+        else {
+            $override = $Host.UI.PromptForChoice("File '$OutputFile' already exists!", 'Do you want to override it?', @('&Yes', '&No'), 1)
+    
+            if ($override -eq 0) {
+                $Data | ConvertTo-Json -Depth 100 | Out-File -FilePath $OutputFile -Encoding utf8
+            }
+        }
+    }
+    else {
+        $Data | ConvertTo-Json -Depth 100 | Out-File -FilePath $OutputFile -Encoding utf8
     }
 }

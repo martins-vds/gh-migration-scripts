@@ -119,3 +119,9 @@ function DeleteRepo($org, $repo, $token) {
         Write-Host "The repo '$repo' does not exist in org '$org'. No operation will be performed." -ForegroundColor Yellow
     }
 }
+
+function GetRepoSbom ($org, $repo, $token) {
+    $sbomApi = "https://api.github.com/repos/$org/$repo/dependency-graph/sbom"
+
+    return Get -uri $sbomApi -token $token
+}
