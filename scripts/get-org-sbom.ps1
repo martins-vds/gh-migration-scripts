@@ -47,3 +47,5 @@ $repos | ForEach-Object{
 
     SaveTo-Json -Data $sbom -OutputFile $repoSbomOutputFile -Confirm:$Confirm
 }
+
+Write-Host "Software bill of materials saved to '$($OutputDirectory.FullName)'." -ForegroundColor Green
