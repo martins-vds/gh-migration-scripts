@@ -123,5 +123,14 @@ function DeleteRepo($org, $repo, $token) {
 function GetRepoSbom ($org, $repo, $token) {
     $sbomApi = "https://api.github.com/repos/$org/$repo/dependency-graph/sbom"
 
-    return Get -uri $sbomApi -token $token
+    try {
+        return Get -uri $sbomApi -token $token
+    }
+    catch [Microsoft.PowerShell.Commands.HttpResponseException] {
+        if ($_.Exception.Response.StatusCode -ne [System.Net.HttpStatusCode]::NotFound) {
+            throw
+        }
+                
+        return $null
+    }
 }

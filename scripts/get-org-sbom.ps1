@@ -38,6 +38,11 @@ $repos | ForEach-Object{
     Write-Host "Fetching software bill of materials for repo '$($repo.name)'..." -ForegroundColor White
     $sbom = GetRepoSbom -org $Org -repo $repo.name -token $token
 
+    if($sbom -ne $null){
+        Write-Host "No software bill of materials found for repo '$($repo.name)'." -ForegroundColor Yellow
+        return
+    }
+
     $repoSbomOutputFile = Join-Path -Path $OutputDirectory -ChildPath "sbom-$($Org.ToLowerInvariant())-$($repo.name).json"
 
     SaveTo-Json -Data $sbom -OutputFile $repoSbomOutputFile -Confirm:$Confirm
