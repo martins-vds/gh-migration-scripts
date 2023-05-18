@@ -1,6 +1,6 @@
 . $PSScriptRoot\common.ps1
 
-function GetPackages($org, $type, $token){
+function GetPackages($org, $type, $token) {
     $packagesApi = "https://api.github.com/orgs/$org/packages?package_type=$type&page={0}&per_page=100"
     $allPackages = @()
     $page = 0
@@ -15,7 +15,7 @@ function GetPackages($org, $type, $token){
     return $allPackages
 }
 
-function GetPackageVersions($org, $type, $package, $max, $token){
+function GetPackageVersions($org, $type, $package, $max, $token) {
     $packagesApi = "https://api.github.com/orgs/$org/packages/$type/$package/versions?page={0}&per_page=100"
     $allVersions = @()
     $page = 0
@@ -34,7 +34,7 @@ function GetPackageVersions($org, $type, $package, $max, $token){
     }
 }
 
-function GetPackageVersion($org, $type, $package, $version, $token){
+function GetPackageVersion($org, $type, $package, $version, $token) {
     $packagesApi = "https://api.github.com/orgs/$org/packages/$type/$package/versions/$version"
 
     try {
@@ -45,14 +45,14 @@ function GetPackageVersion($org, $type, $package, $version, $token){
     }
 }
 
-function Cleanup([System.IO.FileInfo]$path){
-    If(Test-Path -Path $path -PathType Container){
+function Cleanup([System.IO.FileInfo]$path) {
+    If (Test-Path -Path $path -PathType Container) {
         Remove-Item "$($path.FullName.TrimEnd("\"))\*" -Recurse -Force
     }
 }
 
-function CleanupConfig($org, $path){
-    If(Test-Path -Path "$path\$org"){
+function CleanupConfig($org, $path) {
+    If (Test-Path -Path "$path\$org") {
         Remove-Item "$path\$org" -Recurse -Force
     }
 }

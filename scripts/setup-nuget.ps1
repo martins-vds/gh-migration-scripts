@@ -35,11 +35,12 @@ Function Add-PathVariable {
     param (
         [string]$addPath
     )
-    if (Test-Path $addPath){
+    if (Test-Path $addPath) {
         $regexAddPath = [regex]::Escape($addPath)
-        $arrPath = $env:Path -split ';' | Where-Object {$_ -notMatch "^$regexAddPath\\?"}
+        $arrPath = $env:Path -split ';' | Where-Object { $_ -notMatch "^$regexAddPath\\?" }
         return ($arrPath + $addPath) -join ';'
-    } else {
+    }
+    else {
         Throw "'$addPath' is not a valid path."
     }
 }

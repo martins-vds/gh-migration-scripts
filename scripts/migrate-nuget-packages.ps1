@@ -14,20 +14,20 @@ param (
     $TargetUsername,
     [Parameter(Mandatory = $true)]
     [ValidateScript({
-        if (-Not ($_ | Test-Path) ) {
-            throw "Folder '$_' does not exist. Make sure to create it before running the script."
-        }
+            if (-Not ($_ | Test-Path) ) {
+                throw "Folder '$_' does not exist. Make sure to create it before running the script."
+            }
 
-        if (-Not ($_ | Test-Path -PathType Container) ) {
-            throw "The Path '$_' argument must be a directory. File paths are not allowed."
-        }
+            if (-Not ($_ | Test-Path -PathType Container) ) {
+                throw "The Path '$_' argument must be a directory. File paths are not allowed."
+            }
         
-        return $true 
-    })]
+            return $true 
+        })]
     [System.IO.FileInfo]
     $PackagesPath,
     [Parameter(Mandatory = $false)]
-    [ValidateRange(1,10)]    
+    [ValidateRange(1, 10)]    
     [int]
     $MaxVersions = 1,
     [Parameter(Mandatory = $false)]
@@ -42,16 +42,16 @@ $ErrorActionPreference = 'Stop'
 
 . $PSScriptRoot\common-packages.ps1
 
-function ConfigureNuget ($org, $username, $path, $token){
+function ConfigureNuget ($org, $username, $path, $token) {
     $orgConfig = "$path\$($org.Trim())"
 
-    if(-Not(Test-Path -Path $orgConfig)){
+    if (-Not(Test-Path -Path $orgConfig)) {
         New-Item -Path $orgConfig -ItemType Directory | Out-Null
     }
     
     $nugetConfig = "$orgConfig\nuget.config"
 
-    If(Test-Path -Path $nugetConfig){
+    If (Test-Path -Path $nugetConfig) {
         Remove-Item -Path $nugetConfig | Out-Null
     }
 
@@ -77,42 +77,42 @@ function ConfigureNuget ($org, $username, $path, $token){
     return $orgConfig
 }
 
-function DownloadNugetPackage($org, $package, $version, $configPath, $packagesPath){
+function DownloadNugetPackage($org, $package, $version, $configPath, $packagesPath) {
     Exec { nuget install $package -Version $version -Source github -Source nuget -OutputDirectory $packagesPath -ConfigFile $configPath\nuget.config -NonInteractive } | Out-Null
 
     Move-Item -Path $packagesPath\$($package).$($version)\$($package).$($version).nupkg -Destination $packagesPath -Force | Out-Null
     Remove-Item -Path $packagesPath\$($package).$($version) -Recurse -Force | Out-Null
 }
 
-function UnzipNugetPackage($package, $version, $packagesPath){
+function UnzipNugetPackage($package, $version, $packagesPath) {
     Expand-Archive -Path $packagesPath\$($package).$($version).nupkg -DestinationPath $packagesPath\$($package).$($version) | Out-Null    
 }
 
-function ExtractNugetPackageSpec($package, $version, $packagesPath){
+function ExtractNugetPackageSpec($package, $version, $packagesPath) {
     [xml] $spec = Get-Content $packagesPath\$($package).$($version)\$($package).nuspec
     return $spec
 }
 
-function UpdateNugetPackageRepositoryName($nuspec, $org, $repository){  
+function UpdateNugetPackageRepositoryName($nuspec, $org, $repository) {  
     $nuspec.package.metadata.repository.url = "https://github.com/$org/$repository"
 
     return $nuspec
 }
 
-function UpdateNugetPackageProjectUrl($nuspec, $org, $repository){  
-    if($nuspec.package.metadata.projectUrl){
+function UpdateNugetPackageProjectUrl($nuspec, $org, $repository) {  
+    if ($nuspec.package.metadata.projectUrl) {
         $nuspec.package.metadata.projectUrl = "https://github.com/$org/$repository.git"
     }
 
     return $nuspec
 }
 
-function RepackNugetPackage($nuspec, $package, $version, $packagesPath){
+function RepackNugetPackage($nuspec, $package, $version, $packagesPath) {
     $nuspec.OuterXml | Set-Content -Path $packagesPath\$($package).$($version)\$($package).nuspec -Force | Out-Null
     Exec { nuget pack $packagesPath\$($package).$($version)\$($package).nuspec -OutputDirectory $packagesPath -NonInteractive } | Out-Null    
 }
 
-function RepositoryExits($org, $repository, $token){
+function RepositoryExits($org, $repository, $token) {
     $reposApi = "https://api.github.com/repos/$org/$repository"
 
     try {
@@ -127,16 +127,16 @@ function RepositoryExits($org, $repository, $token){
     }
 }
 
-function ExtractNugetPackageRepositoryName($nuspec){
+function ExtractNugetPackageRepositoryName($nuspec) {
     return  $nuspec.package.metadata.repository.url -replace 'https://github.com/[^/]+/(?<repoName>.*(?=\.git)|.*)', '${repoName}' -replace '.git', ''
 }
 
-function PushNugetPackage($org, $package, $version, $configPath, $packagesPath){
+function PushNugetPackage($org, $package, $version, $configPath, $packagesPath) {
     Exec { nuget push $packagesPath\$($package).$($version).nupkg -Source github -ConfigFile $configPath\nuget.config -NonInteractive -SkipDuplicate } | Out-Null
     Remove-Item -Path $packagesPath\$($package).$($version).nupkg -Force | Out-Null
 }
 
-function DeleteNugetPackage($package, $version, $packagesPath){
+function DeleteNugetPackage($package, $version, $packagesPath) {
     Remove-Item -Path $packagesPath\$($package).$($version) -Recurse -Force | Out-Null
 }
 
@@ -145,7 +145,7 @@ $targetPat = GetToken -token $TargetToken -envToken $env:GH_PAT
 
 $sourceNugetPackages = GetPackages -org $SourceOrg -type "nuget" -token $sourcePat
 
-if($sourceNugetPackages.Length -eq 0){
+if ($sourceNugetPackages.Length -eq 0) {
     Write-Host "No nuget packages found in organization '$SourceOrg'." -ForegroundColor Yellow
     exit 0
 }
@@ -170,14 +170,15 @@ $sourceNugetPackages | ForEach-Object {
 
         $sourceNugetPackageRepository = ExtractNugetPackageRepositoryName -nuspec $spec
 
-        if(RepositoryExits -org $TargetOrg -repository $sourceNugetPackageRepository -token $targetPat){
+        if (RepositoryExits -org $TargetOrg -repository $sourceNugetPackageRepository -token $targetPat) {
             $spec = UpdateNugetPackageRepositoryName -nuspec $spec -org $TargetOrg -repository $sourceNugetPackageRepository
             $spec = UpdateNugetPackageProjectUrl -nuspec $spec -org $TargetOrg -repository $sourceNugetPackageRepository
 
             RepackNugetPackage -nuspec $spec -package $sourceNugetPackage.name -version $sourceNugetPackageVersion.name -packagesPath $PackagesPath.FullName
 
             PushNugetPackage  -org $TargetOrg -package $sourceNugetPackage.name -version $sourceNugetPackageVersion.name -configPath $targetNugetConfig -packagesPath $PackagesPath.FullName
-        }else{
+        }
+        else {
             Write-Host "Failed to migrate package '$($sourceNugetPackage.name).$($sourceNugetPackageVersion.name)'. Repo '$sourceNugetPackageRepository' does not exist in org '$TargetOrg'." -ForegroundColor Red
         }
 

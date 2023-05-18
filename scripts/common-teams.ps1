@@ -8,7 +8,7 @@ function GetTeams ($org, $token) {
     do {    
         $page += 1
 
-        Write-Verbose "Fetching teams from page '$page' of '$teamsApi'..."
+        Write-Verbose "Fetching teams from page '$page' of '$($teamsApi -f $page)'..."
 
         $teams = Get -uri "$($teamsApi -f $page)" -token $token
         $allTeams += $teams

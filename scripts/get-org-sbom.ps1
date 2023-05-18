@@ -20,25 +20,25 @@ $ErrorActionPreference = 'Stop'
 
 . $PSScriptRoot\common-repos.ps1
 
-$token= GetToken -token $Token -envToken $env:GH_SOURCE_PAT
+$token = GetToken -token $Token -envToken $env:GH_SOURCE_PAT
 
 Write-Host "Fetching repos from organization '$Org'..." -ForegroundColor Blue
 $repos = GetReposFromApi -org $Org -token $token
 
-if($repos.Length -eq 0){
+if ($repos.Length -eq 0) {
     Write-Host "No repos found in organization '$Org'." -ForegroundColor Yellow
     exit 0
 }
 
 EnsureDirectoryExists $OutputDirectory
 
-$repos | ForEach-Object{
+$repos | ForEach-Object {
     $repo = $_
 
     Write-Host "Fetching software bill of materials for repo '$($repo.name)'..." -ForegroundColor White
     $sbom = GetRepoSbom -org $Org -repo $repo.name -token $token
 
-    if($sbom -eq $null){
+    if ($sbom -eq $null) {
         Write-Host "No software bill of materials found for repo '$($repo.name)'." -ForegroundColor Yellow
         return
     }

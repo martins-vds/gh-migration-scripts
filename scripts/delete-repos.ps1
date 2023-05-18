@@ -21,7 +21,7 @@ param (
     })]
     [System.IO.FileInfo]
     $ReposFile,
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $true)]
     [string]
     $Token,
     [Parameter(Mandatory = $false)]
@@ -47,8 +47,6 @@ function ConfirmDelete($org, $repo, $token){
     }
 }
 
-$token = GetToken -token $Token -envToken $env:GH_PAT
-
 @(Import-Csv -Path $ReposFile) | ForEach-Object { 
-    ConfirmDelete -org $Org -repo $_.name -token $token
+    ConfirmDelete -org $Org -repo $_.name -token $Token
 }

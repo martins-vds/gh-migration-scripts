@@ -6,11 +6,11 @@ param (
     $Org,
     [Parameter(Mandatory = $true)]
     [ValidateScript({
-        if($_ -notmatch "(\.csv$)"){
-            throw "The file specified in the OutputFile argument must have the extension 'csv'"
-        }
-        return $true 
-    })]
+            if ($_ -notmatch "(\.csv$)") {
+                throw "The file specified in the OutputFile argument must have the extension 'csv'"
+            }
+            return $true 
+        })]
     [System.IO.FileInfo]    
     $OutputFile,
     [Parameter(Mandatory = $false)]
@@ -31,26 +31,27 @@ $token = GetToken -token $Token -envToken $env:GH_SOURCE_PAT
 Write-Host "Fetching members from organization '$Org'..." -ForegroundColor Blue
 $members = GetOrgMembers -org $Org -token $token
 
-if($members.Length -eq 0){
+if ($members.Length -eq 0) {
     Write-Host "No members found in organization '$Org'." -ForegroundColor Yellow
     exit 0
 }
 
 $slugMappings = @($members | ForEach-Object {
-    $member = $_
+        $member = $_
 
-    return [ordered]@{
-        slug_source_org = $member.login
-        slug_target_org = ""
-    }
-}) | ForEach-Object {
+        return [ordered]@{
+            slug_source_org = $member.login
+            slug_target_org = ""
+        }
+    }) | ForEach-Object {
     $teamMemberDetails = GetUserDetails -username $_.slug_source_org -token $token
 
-    if($teamMemberDetails.email -ne $null){
+    if ($teamMemberDetails.email -ne $null) {
         $new_slug = "$($teamMemberDetails.email.Split("@")[0].Replace(".", "-"))_emu"
 
         $_.slug_target_org = $new_slug        
-    }else{
+    }
+    else {
         Write-Host "No publicaly visible email found for user '$($_.slug_source_org)'. Skipping..." -ForegroundColor Yellow
     }
 

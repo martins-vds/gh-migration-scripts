@@ -14,7 +14,7 @@ $ErrorActionPreference = 'Stop'
 . $PSScriptRoot\common.ps1
 
 $migrationsApi = "https://api.github.com/orgs/$OrgName/migrations?page={0}&per_page=100"
-$token = GetToken -token $Token -envToken $env:GH_PAT
+$token = GetToken -token $Token -envToken $env:GH_SOURCE_PAT
 $allMigrations = @()
 $page = 0
 
