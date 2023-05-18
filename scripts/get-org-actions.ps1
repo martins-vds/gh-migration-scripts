@@ -57,6 +57,7 @@ $repos | ForEach-Object {
             return @{
                 action_reference = "$($actionName)@$($actionVersion)"
                 is_internal = $actionName -match "^${Org}/"
+                is_allowed = $false
             }
         })
 
