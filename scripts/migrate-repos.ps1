@@ -127,7 +127,7 @@ $executionDuration = Measure-Command {
             if ($repoMigrationState -eq "Queued" -and ![string]::IsNullOrWhiteSpace($repoMigrationId)) {
                 Write-Host "Waiting migration for repo '$repoName' to finish..." -ForegroundColor White               
 
-                gh gei wait-for-migration --migration-id "$repoMigrationId" --github-target-pat "$sourcePat"
+                gh gei wait-for-migration --migration-id "$repoMigrationId" --github-target-pat "$targetPat"
 
                 if ($lastexitcode -eq 0) {
                     Write-Host "Successfully migrated repo '$repoName'." -ForegroundColor Green
