@@ -127,22 +127,32 @@ $executionDuration = Measure-Command {
             if ($repoMigrationState -eq "Queued" -and ![string]::IsNullOrWhiteSpace($repoMigrationId)) {
                 Write-Host "Waiting migration for repo '$repoName' to finish..." -ForegroundColor White               
 
-                gh gei wait-for-migration --migration-id "$repoMigrationId" --github-target-pat "$targetPat"
+                try {
+                    gh gei wait-for-migration --migration-id "$repoMigrationId" --github-target-pat "$targetPat"
 
-                if ($lastexitcode -eq 0) {
-                    Write-Host "Successfully migrated repo '$repoName'." -ForegroundColor Green
+                    if ($lastexitcode -eq 0) {
+                        Write-Host "Successfully migrated repo '$repoName'." -ForegroundColor Green
 
-                    $repoMigrations[$repoName].State = "Succeeded"
-                    $succeeded++
+                        $repoMigrations[$repoName].State = "Succeeded"
+                        $succeeded++
+                    }
+                    else {
+                        Write-Host "Failed to migrate repo '$repoName'. Downloading migration logs..." -ForegroundColor Red
+                
+                        $repoMigrations[$repoName].State = "Failed"
+                        $failed++ 
+                
+                        try {
+                            gh gei download-logs --github-target-org "$TargetOrg" --target-repo "$repoName" --github-target-pat "$targetPat" --migration-log-file "migration-log-$TargetOrg-$repoName-$(Get-Date -Format "yyyyMMddHHmmss").log"
+                        }
+                        catch {
+                            Write-Host "Failed to download migration logs for repo '$repoName'. Reason: $($_.Exception.Message)" -ForegroundColor Red
+                        }
+                    }
                 }
-                else {
-                    Write-Host "Failed to migrate repo '$repoName'. Downloading migration logs..." -ForegroundColor Red
-                
-                    $repoMigrations[$repoName].State = "Failed"
-                    $failed++ 
-                
-                    gh gei download-logs --github-target-org "$TargetOrg" --target-repo "$repoName" --github-target-pat "$targetPat" --migration-log-file "migration-log-$TargetOrg-$repoName-$(Get-Date -Format "yyyyMMddHHmmss").log"
-                }      
+                catch {
+                    Write-Host "Failed to wait for migration of repo '$repoName' to finish. Reason: $($_.Exception.Message)" -ForegroundColor Red
+                }     
             }
         } 
     }
