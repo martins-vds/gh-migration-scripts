@@ -116,7 +116,7 @@ $executionDuration = Measure-Command {
         }
 
         $reposToMigrate | Foreach-Object -Parallel {
-            . $PSScriptRoot\common-gh.ps1
+            . $using:PSScriptRoot\common-gh.ps1
             
             $repoName = $_.name
 
