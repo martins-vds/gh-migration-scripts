@@ -66,6 +66,7 @@ $oddBatches = $repos.Length % $parallelMigrations -ne 0
 
 $succeeded = 0
 $failed = 0
+$unknown = 0
 $repoMigrations = [ordered]@{}
 
 $skip = 0
@@ -151,6 +152,9 @@ $executionDuration = Measure-Command {
                     }
                 }
                 catch {
+                    $repoMigrations[$repoName].State = "Unknown"
+                    $unknown++
+
                     Write-Host "Failed to wait for migration of repo '$repoName' to finish. Reason: $($_.Exception.Message)" -ForegroundColor Red
                 }     
             }
