@@ -116,6 +116,7 @@ $executionDuration = Measure-Command {
         }
 
         $reposToMigrate | Foreach-Object -Parallel {
+            . $PSScriptRoot\common-gh.ps1
             
             $repoName = $_.name
 
@@ -129,7 +130,7 @@ $executionDuration = Measure-Command {
                 Write-Host "Waiting migration for repo '$repoName' to finish..." -ForegroundColor White               
 
                 try {
-                    gh gei wait-for-migration --migration-id "$repoMigrationId" --github-target-pat "$targetPat"
+                    ExecGh { gh gei wait-for-migration --migration-id "$repoMigrationId" --github-target-pat "$targetPat" }
 
                     if ($lastexitcode -eq 0) {
                         Write-Host "Successfully migrated repo '$repoName'." -ForegroundColor Green
@@ -144,7 +145,7 @@ $executionDuration = Measure-Command {
                         $failed++ 
                 
                         try {
-                            gh gei download-logs --github-target-org "$TargetOrg" --target-repo "$repoName" --github-target-pat "$targetPat" --migration-log-file "migration-log-$TargetOrg-$repoName-$(Get-Date -Format "yyyyMMddHHmmss").log"
+                            ExecGh { gh gei download-logs --github-target-org "$TargetOrg" --target-repo "$repoName" --github-target-pat "$targetPat" --migration-log-file "migration-log-$TargetOrg-$repoName-$(Get-Date -Format "yyyyMMddHHmmss").log" }
                         }
                         catch {
                             Write-Host "Failed to download migration logs for repo '$repoName'. Reason: $($_.Exception.Message)" -ForegroundColor Red

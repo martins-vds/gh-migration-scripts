@@ -4,7 +4,7 @@ function Exec {
     )
     & @ScriptBlock
     if ($lastexitcode -ne 0) {
-        throw "Script block '$($ScriptBlock.ToString().Substring(0, 10))...' failed with code $($lastexitcode)"
+        throw "Script block '$($ScriptBlock.ToString().Trim().Substring(0, 10))...' failed with code $($lastexitcode)"
     }
 }
 
