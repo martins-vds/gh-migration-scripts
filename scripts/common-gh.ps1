@@ -8,6 +8,31 @@ function ExecGh {
     }
 }
 
+function ExecProcess($filePath, $argumentList, $workingDirectory) {
+    $result = @{
+        exitCode = 0
+        errors = @()
+        output = @()
+        exitMessage = ""
+    }
+    
+    $outputLogPath = Join-Path $workingDirectory "output-$(New-Guid).log"
+    $errorsLogPath = Join-Path $workingDirectory "errors-$(New-Guid).log"
+    New-Item -Type File -Path $errorsLogPath | Out-Null
+
+    $proc = Start-Process -FilePath $filePath -ArgumentList $argumentList -WorkingDirectory $workingDirectory -Wait -NoNewWindow -PassThru -RedirectStandardError $errorsLogPath -RedirectStandardOutput $outputLogPath
+
+    $result.exitCode = $proc.ExitCode    
+    $result.errors = Get-Content -Path $errorsLogPath
+    $result.output = Get-Content -Path $outputLogPath
+
+    if($result.exitCode -ne 0){
+        $result.exitMessage = "Failed to run command '$filePath $(Join-String $argumentList -Separator " ")'."
+    }
+
+    return $result
+}
+
 function Substring {
     param (
         [string]$String,

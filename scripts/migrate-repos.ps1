@@ -129,10 +129,10 @@ $executionDuration = Measure-Command {
             if ($repoMigrationState -eq "Queued" -and ![string]::IsNullOrWhiteSpace($repoMigrationId)) {
                 Write-Host "Waiting migration for repo '$repoName' to finish..." -ForegroundColor White               
 
-                try {
-                    ExecGh { gh gei wait-for-migration --migration-id "$repoMigrationId" --github-target-pat "$targetPat" }
+                try {                    
+                    $waitOutput = ExecProcess -filePath gh -argumentList @("gei", "wait-for-migration", "--migration-id", "$repoMigrationId", "--github-target-pat", "$targetPat") -workingDirectory $PSScriptRoot
 
-                    if ($lastexitcode -eq 0) {
+                    if ($waitOutput.exitCode -eq 0) {
                         Write-Host "Successfully migrated repo '$repoName'." -ForegroundColor Green
 
                         $repoMigrations[$repoName].State = "Succeeded"
@@ -145,7 +145,11 @@ $executionDuration = Measure-Command {
                         $failed++ 
                 
                         try {
-                            ExecGh { gh gei download-logs --github-target-org "$TargetOrg" --target-repo "$repoName" --github-target-pat "$targetPat" --migration-log-file "migration-log-$TargetOrg-$repoName-$(Get-Date -Format "yyyyMMddHHmmss").log" }
+                            $dowloadLogsOutput = ExecProcess -filePath gh -argumentList @("gei", "download-logs", "--github-target-org", "$TargetOrg", "--target-repo", "$repoName", "--github-target-pat", "$targetPat", "--migration-log-file", "migration-log-$TargetOrg-$repoName-$(Get-Date -Format "yyyyMMddHHmmss").log") -workingDirectory $PSScriptRoot
+
+                            if($dowloadLogsOutput.exitCode -ne 0){
+                                Write-Host "Failed to download migration logs for repo '$repoName'. Reason: $($dowloadLogsOutput.errors)" -ForegroundColor Red
+                            }
                         }
                         catch {
                             Write-Host "Failed to download migration logs for repo '$repoName'. Reason: $($_.Exception.Message)" -ForegroundColor Red
