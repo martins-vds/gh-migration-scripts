@@ -29,7 +29,7 @@ function ExecProcess($filePath, $argumentList, $workingDirectory) {
     $result.output += Get-Content -Path $outputLogPath
 
     if($result.exitCode -ne 0){
-        $result.exitMessage = "Failed to run command '$filePath $(Join-String $argumentList -Separator " ")'."
+        $result.exitMessage = "Failed to run command '$filePath $($argumentList | Join-String -Separator " ")'."
     }
 
     return $result
