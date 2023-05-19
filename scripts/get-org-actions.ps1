@@ -21,6 +21,7 @@ param (
     $Confirm
 )
 
+$ProgressPreference = 'SilentlyContinue'
 $ErrorActionPreference = 'Stop'
 
 . $PSScriptRoot\common-repos.ps1
