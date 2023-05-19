@@ -130,7 +130,7 @@ $executionDuration = Measure-Command {
                 Write-Host "Waiting migration for repo '$repoName' to finish..." -ForegroundColor White               
 
                 try {                    
-                    $waitOutput = ExecProcess -filePath gh -argumentList @("gei", "wait-for-migration", "--migration-id", "$repoMigrationId", "--github-target-pat", "$targetPat") -workingDirectory $PSScriptRoot
+                    $waitOutput = ExecProcess -filePath gh -argumentList @("gei", "wait-for-migration", "--migration-id", "$repoMigrationId", "--github-target-pat", "$targetPat") -workingDirectory $using:PSScriptRoot
 
                     if ($waitOutput.exitCode -eq 0) {
                         Write-Host "Successfully migrated repo '$repoName'." -ForegroundColor Green
@@ -145,7 +145,7 @@ $executionDuration = Measure-Command {
                         $failed++ 
                 
                         try {
-                            $dowloadLogsOutput = ExecProcess -filePath gh -argumentList @("gei", "download-logs", "--github-target-org", "$TargetOrg", "--target-repo", "$repoName", "--github-target-pat", "$targetPat", "--migration-log-file", "migration-log-$TargetOrg-$repoName-$(Get-Date -Format "yyyyMMddHHmmss").log") -workingDirectory $PSScriptRoot
+                            $dowloadLogsOutput = ExecProcess -filePath gh -argumentList @("gei", "download-logs", "--github-target-org", "$TargetOrg", "--target-repo", "$repoName", "--github-target-pat", "$targetPat", "--migration-log-file", "migration-log-$TargetOrg-$repoName-$(Get-Date -Format "yyyyMMddHHmmss").log") -workingDirectory $using:PSScriptRoot
 
                             if($dowloadLogsOutput.exitCode -ne 0){
                                 Write-Host "Failed to download migration logs for repo '$repoName'. Reason: $($dowloadLogsOutput.errors)" -ForegroundColor Red
