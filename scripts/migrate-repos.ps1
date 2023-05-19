@@ -139,7 +139,7 @@ $executionDuration = Measure-Command {
                         $succeeded++
                     }
                     else {
-                        Write-Host "Failed to migrate repo '$repoName'. Downloading migration logs..." -ForegroundColor Red
+                        Write-Host "Failed to wait for migration of repo '$repoName'. Reason: $(waitOutput.exitMessage)" -ForegroundColor Red
                 
                         $repoMigrations[$repoName].State = "Failed"
                         $failed++ 
@@ -172,4 +172,4 @@ Write-Host "The migration of $($repos.Length) repos took $("{0:dd}d:{0:hh}h:{0:m
 $logFile = "migration-$(Get-Date -Format "yyyyMMddHHmmss").csv"
 $repoMigrations.GetEnumerator() | Select-Object Value | ForEach-Object { $_.Value } | ConvertTo-Csv -NoTypeInformation | Out-File -Path $logFile -Force -Encoding utf8
 
-Write-Host "Migrations log file saved to '$logFile'." -ForegroundColor White
+Write-Host "Migrations log files saved to '$logFile'." -ForegroundColor White

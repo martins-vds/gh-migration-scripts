@@ -43,20 +43,7 @@ $slugMappings = @($members | ForEach-Object {
             slug_source_org = $member.login
             slug_target_org = ""
         }
-    }) | ForEach-Object {
-    $teamMemberDetails = GetUserDetails -username $_.slug_source_org -token $token
-
-    if ($teamMemberDetails.email -ne $null) {
-        $new_slug = "$($teamMemberDetails.email.Split("@")[0].Replace(".", "-"))_emu"
-
-        $_.slug_target_org = $new_slug        
-    }
-    else {
-        Write-Host "No publicaly visible email found for user '$($_.slug_source_org)'. Skipping..." -ForegroundColor Yellow
-    }
-
-    return $_
-} | Sort-Object -Property slug_source_org
+    }) | Sort-Object -Property slug_source_org
 
 SaveTo-Csv -Data $slugMappings -OutputFile $OutputFile -Confirm $Confirm
 
