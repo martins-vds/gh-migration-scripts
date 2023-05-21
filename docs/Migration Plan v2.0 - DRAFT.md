@@ -1,6 +1,6 @@
-# Migration Plan v2.0
+# Migration Plan v2.0 - DRAFT
 
-- [Migration Plan v2.0](#migration-plan-v20)
+- [Migration Plan v2.0 - DRAFT](#migration-plan-v20---draft)
   - [Prerequisites](#prerequisites)
   - [Step 1: Install Git for Windows](#step-1-install-git-for-windows)
   - [Step 2: Install PowerShell 7.3.0](#step-2-install-powershell-730)
