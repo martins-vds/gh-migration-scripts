@@ -47,6 +47,8 @@ MSI installers are available for download on the [releases page](https://github
 
 ## Step 4: Install the GitHub Enterprise Importer (GEI) extension of the GitHub CLI
 
+> If you have previously installed the GEI extension, you must upgrade to the latest version before you can use it to migrate to GitHub Enterprise Cloud.
+
 | Install                              | Upgrade                              |
 |:------------------------------------:|:------------------------------------:|
 | `gh extension install github/gh-gei` | `gh extension upgrade github/gh-gei` |
