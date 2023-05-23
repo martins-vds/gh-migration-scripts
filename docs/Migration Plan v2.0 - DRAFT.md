@@ -104,6 +104,8 @@ source organization for organization migrations.
 
 ## Step 8: Fetch the list of GitHub Actions in use by the source organization
 
+> Note: Before running this script, make sure that all the repositories in the source organization have the Dependency Graph enabled. Otherwise, the script will not be able to fetch a complete list of GitHub Actions in use by the source organization. For more information, see [**Configuring the dependency graph**](https://docs.github.com/en/code-security/supply-chain-security/understanding-your-software-supply-chain/configuring-the-dependency-graph)
+
 To fetch the list of GitHub Actions in use by the source organization, run the script `get-org-actions.ps1`:
 
 ```posh
@@ -202,7 +204,7 @@ Replace the placeholders in the command above with the following values.
 |SOURCE|Name of the source organization|
 |DESTINATION|The name you want the new organization to have. Must be unique on GitHub.com|
 
-> Note: Make sure that user access is controlled by teams in the source organization. If you have users with direct access to repositories, you must remove them from the repositories and add them to teams in the source organization before migrating.
+> Note: Make sure that user access is managed by using teams in the source organization. If you have users with direct access to repositories, you must remove them from the repositories and add them to the appropriate teams in the source organization before migrating.
 
 ## Step 14: Migrate your repository secrets (Optional)
 
