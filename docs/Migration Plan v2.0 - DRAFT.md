@@ -18,7 +18,8 @@
   - [Step 12: Migrate your repositories](#step-12-migrate-your-repositories)
   - [Step 13: Migrate your teams](#step-13-migrate-your-teams)
   - [Step 14: Migrate your repository secrets (Optional)](#step-14-migrate-your-repository-secrets-optional)
-  - [Step 15: Reclaim mannequins (Optional)](#step-15-reclaim-mannequins-optional)
+  - [Step 15: Reclaim mannequins](#step-15-reclaim-mannequins)
+  - [Step 16: Post-migration checks](#step-16-post-migration-checks)
   - [Appendix](#appendix)
     - [Create Personal Access Tokens](#create-personal-access-tokens)
     - [Authorizing a personal access token for use with SAML single sign-on](#authorizing-a-personal-access-token-for-use-with-saml-single-sign-on)
@@ -185,7 +186,7 @@ Replace the placeholders in the command above with the following values.
 |SOURCE|Name of the source organization|
 |DESTINATION|The name you want the new organization to have. Must be unique on GitHub.com|
 
-> Note: This step can take a long time to complete depending on the number of repositories you are migrating. You can use the `--parallel` flag to specify the number of repositories to migrate in parallel. The default is 5.
+This step can take a long time to complete depending on the number of repositories you are migrating. You can use the `--parallel` flag to specify the number of repositories to migrate in parallel. The default is `5`.
 
 ## Step 13: Migrate your teams
 
@@ -233,7 +234,7 @@ Replace the placeholders in the command above with the following values.
 
   This script will import the repository secrets for each repository in the destination organization which you want to migrate. If a secret is not found in the CSV file, a default value `CHANGE_ME` will be used.
 
-## Step 15: Reclaim mannequins (Optional)
+## Step 15: Reclaim mannequins
 
 1. Optionally, to reclaim mannequins in bulk, create a CSV file that maps mannequins to organization members.
 
@@ -266,6 +267,18 @@ Replace the placeholders in the command above with the following values.
     ```
 
 3. The organization member will receive an invitation via email, and the mannequin will not be reclaimed until the member accepts the invitation.
+
+## Step 16: Post-migration checks
+
+1. Check if all the repositories have been migrated
+   - If there are missing repositories in the destination organization, check the repositories file and confirm that the all the repositories you want to migrate are listed in the file
+2. Check if all the teams have been migrated and the members have been added to the teams
+   - If users are missing from the teams, check the slug mapping file and confirm that all the users are listed in the file
+3. Check if teams have been added to the repositories and their permissions have been set correctly
+4. Check if all the repository secrets have been migrated
+5. Check if workflows are running correctly
+   - If workflows are failing with the error `Resource not accessible by integration`, check the job permissions for the workflows and confirm that the workflows have the correct permissions to access the resources. For more information, see [**Permissions for GitHub Actions**](https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#permissions)
+   - If workflows are failing with the error `<ACTION> is not allowed to be used in <ORGANIZATION>/<REPOSITORY>`, check the allow-list and confirm that the GitHub Actions in use by the source organization are allowed in the destination organization. For more information, see [**Step 9: Generate the list of allowed GitHub Actions in use by the target organization**](#step-9-generate-the-list-of-allowed-github-actions-in-use-by-the-target-organization)
 
 ---
 
