@@ -1,6 +1,6 @@
-# Migration Plan v1.5
+# Migration Plan v1.5 - NO LONGER MAINTAINED
 
-- [Migration Plan v1.5](#migration-plan-v15)
+- [Migration Plan v1.5 - NO LONGER MAINTAINED](#migration-plan-v15---no-longer-maintained)
   - [Prerequisites](#prerequisites)
   - [Step 1: Install Git for Windows](#step-1-install-git-for-windows)
   - [Step 2: Install PowerShell 7.3.0](#step-2-install-powershell-730)

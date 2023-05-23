@@ -8,7 +8,7 @@ param (
     $TargetOrg,
     [Parameter(Mandatory = $false)]
     [System.IO.FileInfo]
-    $SlugMappingsFile,
+    $SlugMappingFile,
     [Parameter(Mandatory = $false)]
     [string]
     $SourceToken,
@@ -35,11 +35,11 @@ function GetSlugMappings ($path) {
     }
 
     if (-Not ($path | Test-Path -PathType Leaf) ) {
-        throw "The SlugMappingsFile argument must be a file. Folder paths are not allowed."
+        throw "The SlugMappingFile argument must be a file. Folder paths are not allowed."
     }
 
     if ($path -notmatch "(\.csv$)") {
-        throw "The file specified in the SlugMappingsFile argument must be of type csv"
+        throw "The file specified in the SlugMappingFile argument must be of type csv"
     }
 
     return @(Import-Csv -Path $path)
@@ -48,7 +48,7 @@ function GetSlugMappings ($path) {
 $sourcePat = GetToken -token $SourceToken -envToken $env:GH_SOURCE_PAT
 $targetPat = GetToken -token $TargetToken -envToken $env:GH_PAT
 
-$slugMappings = GetSlugMappings -path $SlugMappingsFile
+$slugMappings = GetSlugMappings -path $SlugMappingFile
 
 Write-Host "Fetching teams from organization '$SourceOrg'..." -ForegroundColor Blue
 $sourceTeams = GetTeams -org $SourceOrg -token $sourcePat

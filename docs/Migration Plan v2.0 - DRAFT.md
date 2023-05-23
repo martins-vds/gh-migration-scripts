@@ -8,10 +8,17 @@
     - [Winget](#winget)
     - [Signed MSI](#signed-msi)
   - [Step 4: Install the GitHub Enterprise Importer (GEI) extension of the GitHub CLI](#step-4-install-the-github-enterprise-importer-gei-extension-of-the-github-cli)
-  - [Step 5: Clone this Repository](#step-5-clone-this-repository)
-  - [Step 6: Set environment variables](#step-6-set-environment-variables)
-  - [Step 7: Migrate your organization](#step-7-migrate-your-organization)
-  - [Step 12: Reclaim mannequins (Optional)](#step-12-reclaim-mannequins-optional)
+  - [Step 5: Install the PSSodium module for PowerShell](#step-5-install-the-pssodium-module-for-powershell)
+  - [Step 6: Clone this Repository](#step-6-clone-this-repository)
+  - [Step 7: Set environment variables](#step-7-set-environment-variables)
+  - [Step 8: Fetch the list of GitHub Actions in use by the source organization](#step-8-fetch-the-list-of-github-actions-in-use-by-the-source-organization)
+  - [Step 9: Generate the list of allowed GitHub Actions in use by the target organization](#step-9-generate-the-list-of-allowed-github-actions-in-use-by-the-target-organization)
+  - [Step 10: Create a slug mapping file for users in the source organization](#step-10-create-a-slug-mapping-file-for-users-in-the-source-organization)
+  - [Step 11: Get the list of repositories in the source organization](#step-11-get-the-list-of-repositories-in-the-source-organization)
+  - [Step 12: Migrate your repositories](#step-12-migrate-your-repositories)
+  - [Step 13: Migrate your teams](#step-13-migrate-your-teams)
+  - [Step 14: Migrate your repository secrets (Optional)](#step-14-migrate-your-repository-secrets-optional)
+  - [Step 15: Reclaim mannequins (Optional)](#step-15-reclaim-mannequins-optional)
   - [Appendix](#appendix)
     - [Create Personal Access Tokens](#create-personal-access-tokens)
     - [Authorizing a personal access token for use with SAML single sign-on](#authorizing-a-personal-access-token-for-use-with-saml-single-sign-on)
@@ -53,7 +60,16 @@ MSI installers are available for download on the [releases page](https://github
 |:------------------------------------:|:------------------------------------:|
 | `gh extension install github/gh-gei` | `gh extension upgrade github/gh-gei` |
 
-## Step 5: Clone this Repository
+## Step 5: Install the PSSodium module for PowerShell
+
+1. Open PowerShell (recommend opening with elevated Admin permissions)
+2. Type `Install-Module -Name PSSodium -Scope CurrentUser -Force -SkipPublisherCheck`
+
+    ```posh
+    Install-Module -Name PSSodium -Scope CurrentUser -Force -SkipPublisherCheck
+    ```
+
+## Step 6: Clone this Repository
 
 1. Open PowerShell (recommend opening with elevated Admin permissions)
 2. Change the current working directory to the location where you want the cloned directory.
@@ -65,7 +81,7 @@ MSI installers are available for download on the [releases page](https://github
 
 4. Press Enter to create your local clone.
 
-## Step 6: Set environment variables
+## Step 7: Set environment variables
 
 Before you can use the GEI extension to migrate to GitHub Enterprise Cloud, you must create personal access tokens (classic) that can access the source organization and destination enterprise, then set the personal access tokens (classic) as environment variables.
 
@@ -86,12 +102,78 @@ source organization for organization migrations.
 
 4. Close and reopen PowerShell (recommend opening with elevated Admin permissions) to ensure the GH_PAT and GH_SOURCE_PAT environment variables are updated and available.
 
-## Step 7: Migrate your organization
+## Step 8: Fetch the list of GitHub Actions in use by the source organization
 
-To migrate an organization, use the `gh gei migrate-org` command.
+To fetch the list of GitHub Actions in use by the source organization, run the script `get-org-actions.ps1`:
 
 ```posh
-gh gei migrate-org --github-source-org <SOURCE> --github-target-org <DESTINATION> --github-target-enterprise <ENTERPRISE> --wait
+.\scripts\get-org-actions.ps1 -org <SOURCE> -OutputFile .\actions.csv
+```
+
+Replace the placeholders in the command above with the following values.
+
+|Placeholder|Value|
+|-----------|-----|
+|SOURCE|Name of the source organization|
+
+Once the script has completed, you will have a CSV file with a list of GitHub Actions in use by the source organization. You must review this list and determine which GitHub Actions you want to allow in the destination organization by updating the **"is_allowed"** column in the CSV file.
+
+## Step 9: Generate the list of allowed GitHub Actions in use by the target organization
+
+To generate the list of allowed GitHub Actions in use by the target organization, run the script `create-actions-allow-list`:
+
+> Note: This script uses the `actions.csv` file generated in the previous step
+
+```posh
+.\scripts\create-actions-allow-list.ps1 -ActionsFile .\actions.csv
+```
+
+Copy the output of the script and paste it into the allow-list in the GitHub enterprise/organization settings page for the destination organization.
+
+![GitHub Actions Allow List Settings](./images/allow-list.png)
+
+The link to the allow-list is: <https://github.com/enterprises/DESTINATION/settings/actions>. Replace `DESTINATION` with the destination organization
+
+## Step 10: Create a slug mapping file for users in the source organization
+
+To create a slug mapping file for users in the source organization, run the script `create-slug-mapping-file.ps1`:
+
+```posh
+.\scripts\create-slug-mapping-file.ps1 -Org <SOURCE> -OutputFile .\slug-mapping.csv
+```
+
+Replace the placeholders in the command above with the following values.
+
+|Placeholder|Value|
+|-----------|-----|
+|SOURCE|Name of the source organization|
+
+Once the script has completed, you will have a CSV file with a list of users in the source organization. You must review this list and update the `slug_target_org` column in the CSV file with the username of the user in the destination organization.
+
+## Step 11: Get the list of repositories in the source organization
+
+To get the list of repositories in the source organization, run the script `get-repos.ps1`:
+
+```posh
+.\scripts\get-repos.ps1 -Org <SOURCE> -OutputFile .\repos.csv
+```
+
+Replace the placeholders in the command above with the following values.
+
+|Placeholder|Value|
+|-----------|-----|
+|SOURCE|Name of the source organization|
+
+Once the script has completed, you will have a CSV file with a list of repositories in the source organization. You must review this list and determine which repositories you want to migrate to the destination organization by removing the repositories you don't want to migrate from the CSV file.
+
+## Step 12: Migrate your repositories
+
+> Note: This script uses the `repos.csv` file generated in the previous step
+
+To migrate repositories, run the script `migrate-repos.ps1`:
+
+```posh
+.\scripts\migrate-repos.ps1 -SourceOrg <SOURCE> -TargetOrg <DESTINATION> -ReposFile .\repos.csv -Parallel 5
 ```
 
 Replace the placeholders in the command above with the following values.
@@ -100,9 +182,56 @@ Replace the placeholders in the command above with the following values.
 |-----------|-----|
 |SOURCE|Name of the source organization|
 |DESTINATION|The name you want the new organization to have. Must be unique on GitHub.com|
-|ENTERPRISE|The slug for your destination enterprise, which you can identify by looking at the URL for your enterprise account, <https://github.com/enterprises/SLUG>|
 
-## Step 12: Reclaim mannequins (Optional)
+> Note: This step can take a long time to complete depending on the number of repositories you are migrating. You can use the `--parallel` flag to specify the number of repositories to migrate in parallel. The default is 5.
+
+## Step 13: Migrate your teams
+
+> Note: This script uses the `slug-mapping.csv` file generated in step [**Step 10: Create a slug mapping file for users in the source organization**](#step-10-create-a-slug-mapping-file-for-users-in-the-source-organization)
+
+To migrate teams, run the script `migrate-teams.ps1`:
+
+```posh
+.\scripts\migrate-teams.ps1 -SourceOrg <SOURCE> -TargetOrg <DESTINATION> -SlugMappingFile .\slug-mapping.csv -SkipEmptySlugMappings
+```
+
+Replace the placeholders in the command above with the following values.
+
+|Placeholder|Value|
+|-----------|-----|
+|SOURCE|Name of the source organization|
+|DESTINATION|The name you want the new organization to have. Must be unique on GitHub.com|
+
+> Note: Make sure that user access is controlled by teams in the source organization. If you have users with direct access to repositories, you must remove them from the repositories and add them to teams in the source organization before migrating.
+
+## Step 14: Migrate your repository secrets (Optional)
+
+1. Export the repository secrets for each repository in the source organization which you want to migrate following the instructions in [**Exporting repository secrets**](https://github.com/martins-vds/export-secrets-action).
+   - This is a custom GitHub Action that you must add to each repository in the source organization which you want to migrate.
+   - It will export the secrets to a CSV file and upload it to GitHub as an artifact.
+   - Download the CSV file from the artifact for each repository in the source organization which you want to migrate.
+   - If you exported secrets for multiple repositories, you can merge the CSV files into a single CSV file by running the script `merge-csv-files.ps1`:
+
+      ```posh
+      .\scripts\merge-csv-files.ps1 -Path <FOLDER_CONTAINING_CSV_SECRET_FILES> -OutputFile .\secrets.csv
+      ```
+
+2. Import the repository secrets for each repository in the destination organization which you want to migrate by running the script `migrate-repo-secrets.ps1`:
+
+    ```posh
+    .\scripts\migrate-repo-secrets.ps1 -SourceOrg <SOURCE> -TargetOrg <DESTINATION> -ReposFile .\repos.csv -SecretsFile .\secrets.csv
+    ```
+
+    Replace the placeholders in the command above with the following values.
+
+    |Placeholder|Value|
+    |-----------|-----|
+    |SOURCE|Name of the source organization|
+    |DESTINATION|The name you want the new organization to have. Must be unique on GitHub.com|
+
+  This script will import the repository secrets for each repository in the destination organization which you want to migrate. If a secret is not found in the CSV file, a default value `CHANGE_ME` will be used.
+
+## Step 15: Reclaim mannequins (Optional)
 
 1. Optionally, to reclaim mannequins in bulk, create a CSV file that maps mannequins to organization members.
 
