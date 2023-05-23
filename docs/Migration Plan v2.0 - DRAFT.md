@@ -116,7 +116,7 @@ Replace the placeholders in the command above with the following values.
 |-----------|-----|
 |SOURCE|Name of the source organization|
 
-Once the script has completed, you will have a CSV file with a list of GitHub Actions in use by the source organization. You must review this list and determine which GitHub Actions you want to allow in the destination organization by updating the **"is_allowed"** column in the CSV file.
+Once the script has completed, you will have a CSV file with a list of GitHub Actions in use by the source organization. You must review this list and determine which GitHub Actions you want to allow in the destination organization by updating the `is_allowed` column in the CSV file.
 
 ## Step 9: Generate the list of allowed GitHub Actions in use by the target organization
 
@@ -235,7 +235,7 @@ Replace the placeholders in the command above with the following values.
 
 1. Optionally, to reclaim mannequins in bulk, create a CSV file that maps mannequins to organization members.
 
-   - To generate a CSV file with a list of mannequins for an organization, use the `gh gei generate-mannequin-csv` command, replacing DESTINATION with the destination organization and FILENAME with a file name for the resulting CSV file.
+   - To generate a CSV file with a list of mannequins for an organization, use the `gh gei generate-mannequin-csv` command, replacing `DESTINATION` with the destination organization and `FILENAME` with a file name for the resulting CSV file.
 
    Optionally, to include mannequins that have already been reclaimed, add the `--include-reclaimed` flag
 
@@ -249,15 +249,15 @@ Replace the placeholders in the command above with the following values.
 
 2. To reclaim mannequins, use the gh gei reclaim-mannequin command.
 
-    - To reclaim mannequins in bulk with the mapping file you created earlier, replace DESTINATION with the destination organization and FILENAME with the file name of the mapping file.
+    - To reclaim mannequins in bulk with the mapping file you created earlier, replace `DESTINATION` with the destination organization and `FILENAME` with the file name of the mapping file.
 
     ```posh
     gh gei reclaim-mannequin --github-target-org DESTINATION --csv FILENAME.csv
     ```
 
-    - To reclaim an individual mannequin, replace DESTINATION with the destination organization, MANNEQUIN with the login of mannequin, and USERNAME with the username of the organization member that corresponds to the mannequin.
+    - To reclaim an individual mannequin, replace `DESTINATION` with the `destination` organization, MANNEQUIN with the login of mannequin, and USERNAME with the username of the organization member that corresponds to the mannequin.
 
-    If there are multiple mannequins with the same login, you can replace --mannequin-user MANNEQUIN with --mannequin-ID ID, replacing ID with the ID of the mannequin.
+    If there are multiple mannequins with the same login, you can replace `--mannequin-user MANNEQUIN` with `--mannequin-ID ID`, replacing ID with the `ID` of the mannequin.
 
     ```posh
     gh gei reclaim-mannequin --github-target-org DESTINATION --mannequin-user MANNEQUIN --target-user USERNAME
@@ -271,12 +271,12 @@ Replace the placeholders in the command above with the following values.
 
 ### Create Personal Access Tokens
 
-1. In the upper-right corner of any page, click your profile photo, then click **Settings**.
-2. In the left sidebar, click **<> Developer settings**.
-3. In the left sidebar, under **Personal access tokens**, click **Tokens (classic)**.
-4. Select **Generate new token**, then click Generate new token (classic).
+1. In the upper-right corner of any page, click your profile photo, then click `Settings`.
+2. In the left sidebar, click `<> Developer settings`.
+3. In the left sidebar, under `Personal access tokens`, click `Tokens (classic)`.
+4. Select `Generate new token`, then click `Generate new token (classic)`.
 5. Give your token a descriptive name.
-6. To give your token an expiration, select the **Expiration** drop-down menu, then click a default or use the calendar picker.
+6. To give your token an expiration, select the `Expiration` drop-down menu, then click a default or use the calendar picker.
 7. Select the scopes below
    - `repo`
    - `workflow`
@@ -286,14 +286,14 @@ Replace the placeholders in the command above with the following values.
    - `read:org`
    - `read:enterprise`
    - `delete_repo`
-8. Click **Generate token**.
+8. Click `Generate token`.
 9. Copy the token and save it for later
 10. If your organization requires SAML single sign-on for authentication, you must authorize your personal access token for use with SAML single sign-on. For more information, see [**Authorizing a personal access token for use with SAML single sign-on**](#authorizing-a-personal-access-token-for-use-with-saml-single-sign-on).
 
 ### Authorizing a personal access token for use with SAML single sign-on
 
-1. In the upper-right corner of any page, click your profile photo, then click **Settings**.
-2. In the left sidebar, click **Developer settings**.
-3. In the left sidebar, click **Personal access tokens**.
-4. Next to the token you'd like to authorize, click **Configure SSO**. If you don't see Configure SSO, ensure that you have authenticated at least once through your SAML IdP to access resources on GitHub.com
-5. In the dropdown menu, to the right of the organization you'd like to authorize the token for, click **Authorize**.
+1. In the upper-right corner of any page, click your profile photo, then click `Settings`.
+2. In the left sidebar, click `Developer settings`.
+3. In the left sidebar, click `Personal access tokens`.
+4. Next to the token you'd like to authorize, click `Configure SSO`. If you don't see Configure SSO, ensure that you have authenticated at least once through your SAML IdP to access resources on GitHub.com
+5. In the dropdown menu, to the right of the organization you'd like to authorize the token for, click `Authorize`.
