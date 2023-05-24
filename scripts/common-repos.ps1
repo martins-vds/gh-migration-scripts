@@ -122,15 +122,33 @@ function DeleteRepo($org, $repo, $token) {
 
 function GetRepoSbom ($org, $repo, $token) {
     $sbomApi = "https://api.github.com/repos/$org/$repo/dependency-graph/sbom"
+    
+    $retriesLeft = 3
 
-    try {
-        return Get -uri $sbomApi -token $token
-    }
-    catch [Microsoft.PowerShell.Commands.HttpResponseException] {
-        if ($_.Exception.Response.StatusCode -ne [System.Net.HttpStatusCode]::NotFound) {
-            throw
+    do {
+        try {
+            return Get -uri $sbomApi -token $token
         }
+        catch [Microsoft.PowerShell.Commands.HttpResponseException] {
+            if ($_.Exception.Response.StatusCode -eq [System.Net.HttpStatusCode]::NotFound) {
+                return $null
+            }
+            elseif ($_.ErrorDetails.Message -like "could not generate sbom in time") {
+                $retriesLeft--
                 
+                if ($retriesLeft -ge 0) {
+                    Write-Verbose "The sbom for repo '$repo' in org '$org' is not ready yet. Retrying in 5 seconds..." -Verbose
+                    Start-Sleep -Seconds 5
+                }
+            }
+            else {
+                throw
+            }        
+        }
+    } while ($retriesLeft -gt 0)
+
+    if($retriesLeft -eq 0) {
+        Write-Host "The sbom for repo '$repo' in org '$org' was not generated in time after 3 retries. An empty sbom will be returned." -ForegroundColor Yellow
         return $null
     }
 }
