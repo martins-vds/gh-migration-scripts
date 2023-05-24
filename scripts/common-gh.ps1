@@ -13,7 +13,6 @@ function ExecProcess($filePath, $argumentList, $workingDirectory) {
         exitCode = 0
         errors = @()
         output = @()
-        exitMessage = ""
     }
     
     $outputLogPath = Join-Path $workingDirectory "output-$(New-Guid).log"
@@ -27,10 +26,6 @@ function ExecProcess($filePath, $argumentList, $workingDirectory) {
     $result.exitCode = $proc.ExitCode    
     $result.errors += Get-Content -Path $errorsLogPath
     $result.output += Get-Content -Path $outputLogPath
-
-    if($result.exitCode -ne 0){
-        $result.exitMessage = "Failed to run command '$filePath $($argumentList | Join-String -Separator " ")'."
-    }
 
     return $result
 }
