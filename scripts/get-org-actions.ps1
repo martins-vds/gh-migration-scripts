@@ -88,6 +88,7 @@ $repos | ForEach-Object {
                 is_allowed            = $false
                 is_github_or_verified = $false
                 marketplace_link      = ""
+                github_link           = "https://github.com/$actionName"
             }
         })
 
@@ -118,11 +119,16 @@ $uniqueActions | ForEach-Object {
         $isGithubOrVerified = $true
     }
     elseif ($actionName -notmatch "^${Org}/") {
-        Write-Host "Checking if action $actionName is verified on marketplace..." -ForegroundColor Yellow 
+        if (![string]::IsNullOrEmpty($marketplaceLink)) {
+            Write-Host "Checking if action $actionName is verified on marketplace..." -ForegroundColor Yellow 
 
-        if ($(VerifyActionOnMarketplace $marketplaceLink)) {
-            $isAllowed = $true
-            $isGithubOrVerified = $true
+            if ($(VerifyActionOnMarketplace $marketplaceLink)) {
+                $isAllowed = $true
+                $isGithubOrVerified = $true
+            }
+        }
+        else {
+            Write-Host "Unable to check if action $actionName is verified on marketplace because no marketplace link was found." -ForegroundColor Yellow
         }
     }
 
