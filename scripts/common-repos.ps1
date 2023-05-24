@@ -133,7 +133,7 @@ function GetRepoSbom ($org, $repo, $token) {
             if ($_.Exception.Response.StatusCode -eq [System.Net.HttpStatusCode]::NotFound) {
                 return $null
             }
-            elseif ($_.ErrorDetails.Message -like "could not generate sbom in time") {
+            elseif ($_.Exception.Message -like "could not generate sbom in time") {
                 $retriesLeft--
                 
                 if ($retriesLeft -ge 0) {
