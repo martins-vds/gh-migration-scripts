@@ -48,9 +48,9 @@ function GetSecretsFromFile($path) {
 function GetSecretOrDefault($secrets, $repo, $environment, $secretKey, $secretType, $default) {
     $secretValue = $secrets | `
         Where-Object -Property repo -EQ -Value $repo | `
-        Where-Object -Property environment -EQ $environment | `
-        Where-Object -Property secret_name -EQ $secretKey | `
-        Where-Object -Property secret_type -EQ $secretType | `
+        Where-Object -Property environment_name -EQ -Value $environment | `
+        Where-Object -Property secret_name -EQ -Value $secretKey | `
+        Where-Object -Property secret_type -EQ -Value $secretType | `
         Select-Object -First 1
 
     if ($secretValue) {
@@ -100,6 +100,8 @@ $sourceRepos | ForEach-Object {
 
             if ($sourceRepoSecretValue -eq $defaultSecretValue) {
                 Write-Host "   Secret '$($sourceRepoSecret.name)' not found in secrets file. Using default value '$defaultSecretValue'." -ForegroundColor Yellow
+            }else{
+                Write-Host " S "
             }
 
             $newTargetRepoSecret = @{            

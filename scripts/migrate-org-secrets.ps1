@@ -60,7 +60,7 @@ function GetSecretOrDefault($secrets, $org, $secretKey, $default) {
     $secretValue = $secrets | `
         Where-Object -Property owner -EQ -Value $org | `
         Where-Object -Property secret_type -EQ -Value 'org' | `
-        Where-Object -Property secret_name -EQ $secretKey | `
+        Where-Object -Property secret_name -EQ -Value $secretKey | `
         Select-Object -First 1
 
     if ($secretValue) {
