@@ -142,11 +142,11 @@ $uniqueActions | ForEach-Object {
 
     $actionName = $action.action_name
 
-    Write-Host "Fixing version info for action '$actionName'..." -ForegroundColor White
+    Write-Verbose "Fixing version info for action '$actionName'..."
 
     $actionVersion = FixVersionInfo -action $actionName -version $action.action_version
 
-    Write-Host "Fetching marketplace link for action '$actionName'..." -ForegroundColor White
+    Write-Verbose "Fetching marketplace link for action '$actionName'..."
 
     $marketplaceLink = FetchMarketplaceLink -action $actionName
 
@@ -159,7 +159,7 @@ $uniqueActions | ForEach-Object {
     }
     elseif ($actionName -notmatch "^${Org}/") {
         if (![string]::IsNullOrEmpty($marketplaceLink)) {
-            Write-Host "Checking if action $actionName is verified on marketplace..." -ForegroundColor Yellow 
+            Write-Host "Checking if action '$actionName@$actionVersion' is verified on marketplace..." -ForegroundColor Yellow 
 
             if ($(VerifyActionOnMarketplace $marketplaceLink)) {
                 $isAllowed = $true
@@ -167,7 +167,7 @@ $uniqueActions | ForEach-Object {
             }
         }
         else {
-            Write-Host "Unable to check if action $actionName is verified on marketplace because no marketplace link was found." -ForegroundColor Yellow
+            Write-Host "Unable to check if action '$actionName@$actionVersion' is verified on marketplace because no marketplace link was found." -ForegroundColor Yellow
         }
     }
 
