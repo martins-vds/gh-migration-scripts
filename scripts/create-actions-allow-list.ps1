@@ -29,11 +29,12 @@ $allowed_actions = @(Import-Csv -Path $ActionsFile) `
 | Select-Object -Property @{ Name = "action_reference"; Expression = { "$($_.action_name)@$($_.action_version)" } } `
 | Select-Object -ExpandProperty action_reference
 
-if($allowed_actions.Length -eq 0) {
-    Write-Host "No allowed actions found in '$ActionsFile'." -ForegroundColor Yellow
+if ($allowed_actions.Length -eq 0) {
+    Write-Host "No allowed actions found in '$ActionsFile'. Check the 'is_allowed' column in the csv file for the actions you want to allow and try again." -ForegroundColor Red
     exit 0
 }
 
-Write-Host "Copy the following list of actions to the allow-list in the GitHub enterprise/organization settings:" -ForegroundColor Blue
+Write-Host "Copy the following list of actions to the allow-list in the GitHub enterprise/organization settings:" -ForegroundColor White
 Write-Host ""
-Write-Host $($allowed_actions | Join-String -Separator ",") -ForegroundColor Green
+Write-Host $($allowed_actions | Join-String -Separator ",$([System.Environment]::NewLine)") -ForegroundColor Cyan
+Write-Host ""

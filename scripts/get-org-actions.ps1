@@ -26,6 +26,41 @@ $ErrorActionPreference = 'Stop'
 
 . $PSScriptRoot\common-repos.ps1
 
+function IsKnownCreator($action) {
+
+    $knownCreators = @(
+        "github",
+        "actions",
+        "docker",
+        "azure",
+        "snyk",
+        "redhat-actions",
+        "aws-actions",
+        "hashicorp",
+        "microsoft"
+    )
+
+    return $knownCreators | Where-Object { $action -match "^$_" } | Select-Object -First 1
+}
+
+function FixVersionInfo($action, $version) {
+    $githubTreeUrl = "https://github.com/$action/tree"
+
+    $response = Invoke-WebRequest -Uri "$githubTreeUrl/$version" -UseBasicParsing -SkipHttpErrorCheck
+
+    if($response.StatusCode -eq 200) {
+        return $version
+    }
+
+    $response = Invoke-WebRequest -Uri "$githubTreeUrl/v$version" -UseBasicParsing -SkipHttpErrorCheck
+
+    if($response.StatusCode -eq 200) {
+        return "v$version"
+    }
+
+    return $version
+}
+
 function FetchMarketplaceLink($action) {  
     $html = Invoke-WebRequest -Uri "https://github.com/$action" -UseBasicParsing -SkipHttpErrorCheck
 
@@ -85,7 +120,7 @@ $repos | ForEach-Object {
                 action_name           = $actionName
                 action_version        = $actionVersion
                 is_internal           = $actionName -match "^${Org}/"
-                is_allowed            = $false
+                is_allowed            = $actionName -match "^${Org}/"
                 is_github_or_verified = $false
                 marketplace_link      = ""
                 github_link           = "https://github.com/$actionName"
@@ -100,12 +135,16 @@ if ($null -eq $actions) {
     exit 0
 }
 
-$uniqueActions = $actions | Sort-Object -Property "action_name" -Unique
+$uniqueActions = $actions | Sort-Object -Property "action_name", "action_version" -Unique
 
 $uniqueActions | ForEach-Object {
     $action = $_
 
     $actionName = $action.action_name
+
+    Write-Host "Fixing version info for action '$actionName'..." -ForegroundColor White
+
+    $actionVersion = FixVersionInfo -action $actionName -version $action.action_version
 
     Write-Host "Fetching marketplace link for action '$actionName'..." -ForegroundColor White
 
@@ -114,7 +153,7 @@ $uniqueActions | ForEach-Object {
     $isAllowed = $false
     $isGithubOrVerified = $false
 
-    if ($actionName -match "^github/" -or $actionName -match "^actions/" -or $actionName -match "^azure/") {
+    if (IsKnownCreator $actionName) {
         $isAllowed = $true
         $isGithubOrVerified = $true
     }
@@ -132,6 +171,7 @@ $uniqueActions | ForEach-Object {
         }
     }
 
+    $action.action_version = $actionVersion
     $action.is_allowed = $isAllowed
     $action.is_github_or_verified = $isGithubOrVerified
     $action.marketplace_link = $marketplaceLink
