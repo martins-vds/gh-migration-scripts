@@ -99,9 +99,9 @@ $sourceRepos | ForEach-Object {
             $sourceRepoSecretValue = GetSecretOrDefault -secrets $secrets -repo $sourceRepo.name -environment "" -secretKey $sourceRepoSecret.name -secretType 'repo' -default $defaultSecretValue
 
             if ($sourceRepoSecretValue -eq $defaultSecretValue) {
-                Write-Host "   Secret '$($sourceRepoSecret.name)' not found in secrets file. Using default value '$defaultSecretValue'." -ForegroundColor Yellow
+                Write-Host "  Secret '$($sourceRepoSecret.name)' not found in secrets file. Using default value '$defaultSecretValue'." -ForegroundColor Yellow
             }else{
-                Write-Host " S "
+                Write-Host "  Secret '$($sourceRepoSecret.name)' found in secrets file." -ForegroundColor Blue
             }
 
             $newTargetRepoSecret = @{            
@@ -137,7 +137,7 @@ $sourceRepos | ForEach-Object {
                 $sourceRepoEnvironmentSecretValue = GetSecretOrDefault -secrets $secrets -repo $sourceRepo.name -environment $sourceRepoEnvironment.name -secretKey $sourceRepoEnvironmentSecret.name -secretType 'env' -default $defaultSecretValue
 
                 if ($sourceRepoEnvironmentSecretValue -eq $defaultSecretValue) {
-                    Write-Host "   Secret '$($sourceRepoEnvironmentSecret.name)' not found in secrets file. Using default value '$defaultSecretValue'." -ForegroundColor Yellow
+                    Write-Host "  Secret '$($sourceRepoEnvironmentSecret.name)' not found in secrets file. Using default value '$defaultSecretValue'." -ForegroundColor Yellow
                 }
 
                 $newTargetRepoEnvironmentSecret = @{
