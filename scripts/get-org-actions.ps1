@@ -27,7 +27,7 @@ $ErrorActionPreference = 'Stop'
 . $PSScriptRoot\common-repos.ps1
 
 function FetchMarketplaceLink($action) {  
-    $html = Invoke-WebRequest -Uri "https://github.com/$action" -UseBasicParsing
+    $html = Invoke-WebRequest -Uri "https://github.com/$action" -UseBasicParsing -ErrorAction SilentlyContinue
 
     if ($html.StatusCode -ne 200) {
         return ""
