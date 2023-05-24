@@ -29,6 +29,9 @@ param (
     [int]
     $Parallel = 1,
     [Parameter(Mandatory = $false)]
+    [switch]
+    $AllowPublicRepos,
+    [Parameter(Mandatory = $false)]
     [string]
     $SourceToken,
     [Parameter(Mandatory = $false)]
@@ -94,7 +97,12 @@ $executionDuration = Measure-Command {
         
         $reposToMigrate | ForEach-Object {
             $repoName = $_.name
-            $repoVisibility = $_.visibility
+            
+            if(-Not($AllowPublicRepos) -and $_.visibility -eq "public"){
+                $repoVisibility = "internal"
+            }else{
+                $repoVisibility = $_.visibility
+            }
 
             if (-Not(ExistsRepo -org $TargetOrg -repo $repoName -token $targetPat)) {
                 Write-Host "Queueing migration for repo '$repoName'..." -ForegroundColor Cyan
