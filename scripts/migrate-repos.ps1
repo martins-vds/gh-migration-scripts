@@ -159,7 +159,7 @@ $executionDuration = Measure-Command {
                         $succeeded++
                     }
                     else {
-                        Write-Host "Failed to wait for migration of repo '$repoName'. Reason: $(waitOutput.exitMessage)" -ForegroundColor Red
+                        Write-Host "Failed to wait for migration of repo '$repoName'. Reason: $($waitOutput.exitMessage)" -ForegroundColor Red
                 
                         $repoMigrations[$repoName].State = "Failed"
                         $failed++ 
@@ -168,7 +168,7 @@ $executionDuration = Measure-Command {
                             $dowloadLogsOutput = ExecProcess -filePath gh -argumentList @("gei", "download-logs", "--github-target-org", "$TargetOrg", "--target-repo", "$repoName", "--github-target-pat", "$targetPat", "--migration-log-file", "migration-log-$TargetOrg-$repoName-$(Get-Date -Format "yyyyMMddHHmmss").log") -workingDirectory $using:PSScriptRoot
 
                             if($dowloadLogsOutput.exitCode -ne 0){
-                                Write-Host "Failed to download migration logs for repo '$repoName'. Reason: $($dowloadLogsOutput.errors)" -ForegroundColor Red
+                                Write-Host "Failed to download migration logs for repo '$repoName'. Reason: $($dowloadLogsOutput.exitMessage)" -ForegroundColor Red
                             }
                         }
                         catch {

@@ -10,9 +10,10 @@ function ExecGh {
 
 function ExecProcess($filePath, $argumentList, $workingDirectory) {
     $result = @{
-        exitCode = 0
-        errors = @()
-        output = @()
+        exitCode    = 0
+        exitMessage = ""
+        errors      = @()
+        output      = @()
     }
     
     $outputLogPath = Join-Path $workingDirectory "output-$(New-Guid).log"
@@ -26,6 +27,15 @@ function ExecProcess($filePath, $argumentList, $workingDirectory) {
     $result.exitCode = $proc.ExitCode    
     $result.errors += Get-Content -Path $errorsLogPath
     $result.output += Get-Content -Path $outputLogPath
+
+    if ($result.exitCode -eq 0) {
+        Remove-Item -Path $errorsLogPath -Force | Out-Null
+    }
+    else {
+        $result.exitMessage = "Failed to execute '$filePath $($argumentList | Join-String -Separator " ")'. Check '$errorsLogPath' for more details."
+    }
+
+    Remove-Item -Path $outputLogPath -Force | Out-Null
 
     return $result
 }
@@ -47,7 +57,8 @@ function Substring {
 
     if ($Start + $Length -gt $String.Length) {
         $actualLength = $String.Length - $Start
-    }else{
+    }
+    else {
         $actualLength = $Length
     }
 
