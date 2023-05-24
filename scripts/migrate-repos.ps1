@@ -64,7 +64,11 @@ if ($Parallel -le $repos.Length) {
 }
 
 $batches = [int]($repos.Length / $parallelMigrations)
-$oddBatches = $repos.Length % $parallelMigrations -ne 0
+$oddBatches = $repos.Length % $parallelMigrations -gt 0
+
+if($oddBatches){
+    $batches++
+}
 
 Write-Verbose "Batches: $batches"
 Write-Verbose "Odd batches: $oddBatches"
