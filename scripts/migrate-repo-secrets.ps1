@@ -23,7 +23,7 @@ param (
 $ErrorActionPreference = 'Stop'
 
 . $PSScriptRoot\common-repos.ps1
-. $PSScriptRoot\common-enviroments.ps1
+. $PSScriptRoot\common-environments.ps1
 
 function GetSecretsFromFile($path) {
     if ($null -eq $path) {
