@@ -25,7 +25,7 @@ param (
     [System.IO.FileInfo]
     $ReposFile,
     [Parameter(Mandatory = $false)]
-    [ValidateRange(1, 10)]
+    [ValidateRange(1, [int]::MaxValue) ]
     [int]
     $Parallel = 1,
     [Parameter(Mandatory = $false)]
@@ -59,10 +59,15 @@ $parallelMigrations = 1
 
 if ($Parallel -le $repos.Length) {    
     $parallelMigrations = $Parallel
+}else{
+    $parallelMigrations = [System.Environment]::ProcessorCount
 }
 
 $batches = [int]($repos.Length / $parallelMigrations)
 $oddBatches = $repos.Length % $parallelMigrations -ne 0
+
+Write-Verbose "Batches: $batches"
+Write-Verbose "Odd batches: $oddBatches"
 
 $succeeded = 0
 $failed = 0
@@ -79,15 +84,18 @@ $executionDuration = Measure-Command {
             $take = $repos.Length % $parallelMigrations
         }
     
-        $reposToMigrate = $repos[$skip..($skip + $take - 1)]
+        Write-Verbose "Batch $($i): skip $skip, take $take"
+
+        $reposToMigrate = $repos | Select-Object -Skip $skip -First $take
         
         $reposToMigrate | ForEach-Object {
             $repoName = $_.name
-            
+            $repoVisibility = $_.visibility
+
             if (-Not(ExistsRepo -org $TargetOrg -repo $repoName -token $targetPat)) {
                 Write-Host "Queueing migration for repo '$repoName'..." -ForegroundColor Cyan
 
-                $migrationID = ExecAndGetMigrationID { gh gei migrate-repo --queue-only --github-source-org $SourceOrg --source-repo $repoName --github-target-org $TargetOrg --target-repo $repoName --github-source-pat $sourcePat --github-target-pat $targetPat }
+                $migrationID = ExecAndGetMigrationID { gh gei migrate-repo --queue-only --github-source-org $SourceOrg --source-repo $repoName --github-target-org $TargetOrg --target-repo $repoName --target-repo-visibility $repoVisibility --github-source-pat $sourcePat --github-target-pat $targetPat }
     
                 if ($lastexitcode -eq 0) { 
                     $RepoMigrations[$repoName] = @{

@@ -34,7 +34,7 @@ function GetReposFromApi ($org, $token) {
     do {    
         $page += 1         
         $repos = Get -uri "$($reposApi -f $page)" -token $token
-        $allRepos += $repos | Select-Object -Property id, name, full_name, @{Name = "owner_slug"; Expression = { $_.owner.login } }, @{Name = "owner_type"; Expression = { $_.owner.type } }
+        $allRepos += $repos | Select-Object -Property id, name, full_name, visibility, @{Name = "owner_slug"; Expression = { $_.owner.login } }, @{Name = "owner_type"; Expression = { $_.owner.type } }
     } while ($repos.Length -gt 0)
 
     return $allRepos

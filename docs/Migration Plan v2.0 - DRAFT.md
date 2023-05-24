@@ -17,7 +17,7 @@
   - [Step 11: Get the list of repositories in the source organization](#step-11-get-the-list-of-repositories-in-the-source-organization)
   - [Step 12: Migrate your repositories](#step-12-migrate-your-repositories)
   - [Step 13: Migrate your teams](#step-13-migrate-your-teams)
-  - [Step 14: Migrate your repository secrets (Optional)](#step-14-migrate-your-repository-secrets-optional)
+  - [Step 14: Migrate your repository and environment secrets](#step-14-migrate-your-repository-and-environment-secrets)
   - [Step 15: Reclaim mannequins](#step-15-reclaim-mannequins)
   - [Step 16: Post-migration checks](#step-16-post-migration-checks)
   - [Appendix](#appendix)
@@ -135,7 +135,7 @@ Copy the output of the script and paste it into the allow-list in the GitHub ent
 
 ![GitHub Actions Allow List Settings](./images/allow-list.png)
 
-The link to the allow-list is: <https://github.com/enterprises/DESTINATION/settings/actions>. Replace `DESTINATION` with the destination organization
+The link to the allow-list is: <https://github.com/enterprises/DESTINATION/settings/actions>. Replace `DESTINATION` with the destination enterprise.
 
 ## Step 10: Create a slug mapping file for users in the source organization
 
@@ -184,7 +184,7 @@ Replace the placeholders in the command above with the following values.
 |Placeholder|Value|
 |-----------|-----|
 |SOURCE|Name of the source organization|
-|DESTINATION|The name you want the new organization to have. Must be unique on GitHub.com|
+|DESTINATION|Name of the destination organization. It must be created before running this script.|
 
 This step can take a long time to complete depending on the number of repositories you are migrating. You can use the `--parallel` flag to specify the number of repositories to migrate in parallel. The default is `5`.
 
@@ -207,7 +207,7 @@ Replace the placeholders in the command above with the following values.
 
 > Note: Make sure that user access is managed by using teams in the source organization. If you have users with direct access to repositories, you must remove them from the repositories and add them to the appropriate teams in the source organization before migrating.
 
-## Step 14: Migrate your repository secrets (Optional)
+## Step 14: Migrate your repository and environment secrets
 
 1. Export the repository secrets for each repository in the source organization which you want to migrate following the instructions in [**Exporting repository secrets**](https://github.com/martins-vds/export-secrets-action).
    - This is a custom GitHub Action that you must add to each repository in the source organization which you want to migrate.
@@ -219,7 +219,9 @@ Replace the placeholders in the command above with the following values.
       .\scripts\merge-csv-files.ps1 -Path <FOLDER_CONTAINING_CSV_SECRET_FILES> -OutputFile .\secrets.csv
       ```
 
-2. Import the repository secrets for each repository in the destination organization which you want to migrate by running the script `migrate-repo-secrets.ps1`:
+   - If you **don't want** to migrate repository secrets using scripts, you can **skip the next step** and manually add the secrets to the destination organization.
+
+2. (Optional) Import the repository secrets for each repository in the destination organization which you want to migrate by running the script `migrate-repo-secrets.ps1`:
 
     ```posh
     .\scripts\migrate-repo-secrets.ps1 -SourceOrg <SOURCE> -TargetOrg <DESTINATION> -ReposFile .\repos.csv -SecretsFile .\secrets.csv
