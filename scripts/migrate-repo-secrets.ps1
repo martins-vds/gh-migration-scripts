@@ -51,7 +51,7 @@ function GetSecretOrDefault($secrets, $repo, $environment, $secretKey, $secretTy
         Where-Object -Property environment_name -EQ -Value $environment | `
         Where-Object -Property secret_name -EQ -Value $secretKey | `
         Where-Object -Property secret_type -EQ -Value $secretType | `
-        Select-Object -First 1
+        Select-Object -First 1 -ExpandProperty secret_value
 
     if ($secretValue) {
         return $secretValue -replace '""', '"' -replace '^"|"$', ''

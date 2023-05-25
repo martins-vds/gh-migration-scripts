@@ -61,7 +61,7 @@ function GetSecretOrDefault($secrets, $org, $secretKey, $default) {
         Where-Object -Property owner -EQ -Value $org | `
         Where-Object -Property secret_type -EQ -Value 'org' | `
         Where-Object -Property secret_name -EQ -Value $secretKey | `
-        Select-Object -First 1
+        Select-Object -First 1 -ExpandProperty secret_value
 
     if ($secretValue) {
         return $secretValue -replace '""', '"' -replace '^"|"$', ''
