@@ -64,7 +64,7 @@ function GetSecretOrDefault($secrets, $org, $secretKey, $default) {
         Select-Object -First 1
 
     if ($secretValue) {
-        return $secretValue
+        return $secretValue -replace '""', '"'
     }
     else {        
         return $default

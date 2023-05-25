@@ -54,7 +54,7 @@ function GetSecretOrDefault($secrets, $repo, $environment, $secretKey, $secretTy
         Select-Object -First 1
 
     if ($secretValue) {
-        return $secretValue
+        return $secretValue -replace '""', '"'
     }
     else {
         return $default
