@@ -42,7 +42,7 @@ function GetSecretsFromFile($path) {
         throw "The file specified in the SecretsFile argument must be of type csv"
     }
 
-    return @(Import-Csv -Path $path)
+    return @(Import-Csv -Path $path -Encoding utf8)
 }
 
 function GetSecretOrDefault($secrets, $repo, $environment, $secretKey, $secretType, $default) {
