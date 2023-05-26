@@ -16,8 +16,9 @@ function ExecProcess($filePath, $argumentList, $workingDirectory) {
         output      = @()
     }
     
-    $outputLogPath = Join-Path $workingDirectory "output-$(New-Guid).log"
-    $errorsLogPath = Join-Path $workingDirectory "errors-$(New-Guid).log"
+    $timestamp = Get-Date -Format "ddhhmmss"
+    $outputLogPath = Join-Path $workingDirectory "output-$timestamp.log"
+    $errorsLogPath = Join-Path $workingDirectory "errors-$timestamp.log"
 
     New-Item -Type File -Path $outputLogPath | Out-Null
     New-Item -Type File -Path $errorsLogPath | Out-Null
@@ -63,4 +64,14 @@ function Substring {
     }
 
     $String.Substring($Start, $actualLength)
+}
+
+function UnlockRepo($migrationId, $org, $repo, $token){
+    $unlockUri = "https://api.github.com/orgs/$org/migrations/$migrationId/repos/$repo/lock"
+
+    Delete -uri $unlockUri -token $token | Out-Null
+}
+
+function Delete ($uri, $token) {
+    return Invoke-RestMethod -Uri $uri -Method Delete -Headers @{"Authorization" = "token $token" }
 }

@@ -32,6 +32,9 @@ param (
     [switch]
     $AllowPublicRepos,
     [Parameter(Mandatory = $false)]
+    [switch]
+    $LockSourceRepos,
+    [Parameter(Mandatory = $false)]
     [string]
     $SourceToken,
     [Parameter(Mandatory = $false)]
@@ -62,14 +65,15 @@ $parallelMigrations = 1
 
 if ($Parallel -le $repos.Length) {    
     $parallelMigrations = $Parallel
-}else{
+}
+else {
     $parallelMigrations = [System.Environment]::ProcessorCount
 }
 
 $batches = [int]($repos.Length / $parallelMigrations)
 $oddBatches = $repos.Length % $parallelMigrations -gt 0
 
-if($oddBatches){
+if ($oddBatches) {
     $batches++
 }
 
@@ -98,17 +102,25 @@ $executionDuration = Measure-Command {
         $reposToMigrate | ForEach-Object {
             $repoName = $_.name
             
-            if(-Not($AllowPublicRepos) -and $_.visibility -eq "public"){
+            if (-Not($AllowPublicRepos) -and $_.visibility -eq "public") {
                 $repoVisibility = "internal"
-            }else{
+            }
+            else {
                 $repoVisibility = $_.visibility
             }
 
             if (-Not(ExistsRepo -org $TargetOrg -repo $repoName -token $targetPat)) {
                 Write-Host "Queueing migration for repo '$repoName'..." -ForegroundColor Cyan
 
-                $migrationID = ExecAndGetMigrationID { gh gei migrate-repo --queue-only --github-source-org $SourceOrg --source-repo $repoName --github-target-org $TargetOrg --target-repo $repoName --target-repo-visibility $repoVisibility --github-source-pat $sourcePat --github-target-pat $targetPat }
-    
+                if ($LockSourceRepos) {
+                    $lockSourceRepos = "--lock-source-repo"
+                }
+                else {
+                    $lockSourceRepos = ""
+                }
+                
+                $migrationID = ExecAndGetMigrationID { gh gei migrate-repo $lockSourceRepos --queue-only --github-source-org $SourceOrg --source-repo $repoName --github-target-org $TargetOrg --target-repo $repoName --target-repo-visibility $repoVisibility --github-source-pat $sourcePat --github-target-pat $targetPat }
+
                 if ($lastexitcode -eq 0) { 
                     $RepoMigrations[$repoName] = @{
                         MigrationId = $migrationID
@@ -157,9 +169,20 @@ $executionDuration = Measure-Command {
 
                         $repoMigrations[$repoName].State = "Succeeded"
                         $succeeded++
+
+                        if($LockSourceRepos){
+                            try {
+                                UnlockRepo -org $SourceOrg -repo $repoName -migrationId $repoMigrationId -token $sourcePat
+                            }
+                            catch {
+                                Write-Host "Failed to unlock repo '$repoName' in source org '$SourceOrg'. Reason: $($_.Exception.Message)" -ForegroundColor Red
+                            }
+                        }
                     }
                     else {
-                        Write-Host "Failed to wait for migration of repo '$repoName'. Reason: $($waitOutput.exitMessage)" -ForegroundColor Red
+                        $maskedExitMessage = MaskString -string $waitOutput.exitMessage -mask $sourcePat, $targetPat
+
+                        Write-Host "Failed to wait for migration of repo '$repoName'. Reason: $maskedExitMessage" -ForegroundColor Red
                 
                         $repoMigrations[$repoName].State = "Failed"
                         $failed++ 
@@ -167,8 +190,9 @@ $executionDuration = Measure-Command {
                         try {
                             $dowloadLogsOutput = ExecProcess -filePath gh -argumentList @("gei", "download-logs", "--github-target-org", "$TargetOrg", "--target-repo", "$repoName", "--github-target-pat", "$targetPat", "--migration-log-file", "migration-log-$TargetOrg-$repoName-$(Get-Date -Format "yyyyMMddHHmmss").log") -workingDirectory $using:PSScriptRoot
 
-                            if($dowloadLogsOutput.exitCode -ne 0){
-                                Write-Host "Failed to download migration logs for repo '$repoName'. Reason: $($dowloadLogsOutput.exitMessage)" -ForegroundColor Red
+                            if ($dowloadLogsOutput.exitCode -ne 0) {
+                                $maskedExitMessage = MaskString -string $dowloadLogsOutput.exitMessage -mask $sourcePat, $targetPat
+                                Write-Host "Failed to download migration logs for repo '$repoName'. Reason: $maskedExitMessage" -ForegroundColor Red
                             }
                         }
                         catch {
