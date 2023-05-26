@@ -15,10 +15,17 @@ function ExecProcess($filePath, $argumentList, $workingDirectory) {
         errors      = @()
         output      = @()
     }
-    $tmpOutputLogPath = New-TemporaryFile
-    $tmpErrorsLogPath = New-TemporaryFile
 
-    $proc = Start-Process -FilePath $filePath -ArgumentList $argumentList -WorkingDirectory $workingDirectory -Wait -NoNewWindow -PassThru -RedirectStandardError $tmpErrorsLogPath.FullPath -RedirectStandardOutput $tmpOutputLogPath.FullPath
+    $timestamp = (Get-Date).ToString("yyyyMMddHHmmssfff")
+    $guid = [guid]::NewGuid().ToString()
+
+    $tmpOutputLogPath = Join-Path $workingDirectory "output-$guid-$timestamp.log"
+    $tmpErrorsLogPath = Join-Path $workingDirectory "errors-$guid-$timestamp.log"
+
+    New-Item -Path $tmpOutputLogPath -ItemType File -Force | Out-Null
+    New-Item -Path $tmpErrorsLogPath -ItemType File -Force | Out-Null 
+
+    $proc = Start-Process -FilePath $filePath -ArgumentList $argumentList -WorkingDirectory $workingDirectory -Wait -NoNewWindow -PassThru -RedirectStandardError $tmpErrorsLogPath -RedirectStandardOutput $tmpOutputLogPath
 
     $result.exitCode = $proc.ExitCode    
     $result.output += Get-Content -Path $tmpOutputLogPath
@@ -28,13 +35,7 @@ function ExecProcess($filePath, $argumentList, $workingDirectory) {
         Remove-Item -Path $tmpErrorsLogPath -Force | Out-Null
     }
     else {
-        $timestamp = Get-Date -Format "yyyymmddhhmmssfff"
-
-        $errorsLogPath = Join-Path $workingDirectory "$timestamp-errors.log"
-
-        Move-Item -Path $tmpErrorsLogPath -Destination $errorsLogPath -Force | Out-Null
-
-        $result.exitMessage = "Failed to execute '$filePath $($argumentList | Join-String -Separator " ")'. Check '$errorsLogPath' for more details."
+        $result.exitMessage = "Failed to execute '$filePath $($argumentList | Join-String -Separator " ")'. Check '$tmpErrorsLogPath' for more details."
     }
 
     Remove-Item -Path $tmpOutputLogPath -Force | Out-Null
