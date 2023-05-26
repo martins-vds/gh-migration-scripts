@@ -17,8 +17,8 @@ function ExecProcess($filePath, $argumentList, $workingDirectory) {
     }
     
     $timestamp = Get-Date -Format "yyyymmddhhmmssfff"
-    $outputLogPath = Join-Path $workingDirectory "output-$timestamp.log"
-    $errorsLogPath = Join-Path $workingDirectory "errors-$timestamp.log"
+    $outputLogPath = Join-Path $workingDirectory "$timestamp-output.log"
+    $errorsLogPath = Join-Path $workingDirectory "$timestamp-errors.log"
 
     New-Item -Type File -Path $outputLogPath | Out-Null
     New-Item -Type File -Path $errorsLogPath | Out-Null
