@@ -16,7 +16,6 @@ function ExecProcess($filePath, $argumentList, $workingDirectory) {
         output      = @()
     }
 
-    # $timestamp = (Get-Date).ToString("yyyyMMddHHmmssfff")
     $guid = [guid]::NewGuid().ToString()
 
     $tmpOutputLogPath = Join-Path $workingDirectory "output-$guid.log"
@@ -27,7 +26,7 @@ function ExecProcess($filePath, $argumentList, $workingDirectory) {
 
     $proc = Start-Process -FilePath $filePath -ArgumentList $argumentList -WorkingDirectory $workingDirectory -Wait -NoNewWindow -PassThru -RedirectStandardError $tmpErrorsLogPath -RedirectStandardOutput $tmpOutputLogPath
 
-    $result.exitCode = $proc.ExitCode    
+    $result.exitCode = $proc.ExitCode
     $result.output += Get-Content -Path $tmpOutputLogPath
     $result.errors += Get-Content -Path $tmpErrorsLogPath
     
@@ -78,7 +77,7 @@ function MaskString($string, [string[]] $mask) {
     return $maskedString
 }
 
-function UnlockRepo($migrationId, $org, $repo, $token){
+function UnlockRepo($migrationId, $org, $repo, $token) {
     $unlockUri = "https://api.github.com/orgs/$org/migrations/$migrationId/repos/$repo/lock"
 
     Delete -uri $unlockUri -token $token | Out-Null
