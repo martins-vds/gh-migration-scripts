@@ -15,10 +15,10 @@ function ExecProcess($filePath, $argumentList, $workingDirectory) {
         errors      = @()
         output      = @()
     }
-    $tmpOutputLogPath = New-TemporaryFile | Out-Null
-    $tmpErrorsLogPath = New-TemporaryFile | Out-Null
+    $tmpOutputLogPath = New-TemporaryFile
+    $tmpErrorsLogPath = New-TemporaryFile
 
-    $proc = Start-Process -FilePath $filePath -ArgumentList $argumentList -WorkingDirectory $workingDirectory -Wait -NoNewWindow -PassThru -RedirectStandardError $tmpErrorsLogPath -RedirectStandardOutput $tmpOutputLogPath
+    $proc = Start-Process -FilePath $filePath -ArgumentList $argumentList -WorkingDirectory $workingDirectory -Wait -NoNewWindow -PassThru -RedirectStandardError $tmpErrorsLogPath.FullPath -RedirectStandardOutput $tmpOutputLogPath.FullPath
 
     $result.exitCode = $proc.ExitCode    
     $result.output += Get-Content -Path $tmpOutputLogPath
