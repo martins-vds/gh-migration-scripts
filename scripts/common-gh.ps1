@@ -15,28 +15,29 @@ function ExecProcess($filePath, $argumentList, $workingDirectory) {
         errors      = @()
         output      = @()
     }
-    
-    $timestamp = Get-Date -Format "yyyymmddhhmmssfff"
-    $outputLogPath = Join-Path $workingDirectory "$timestamp-output.log"
-    $errorsLogPath = Join-Path $workingDirectory "$timestamp-errors.log"
+    $tmpOutputLogPath = New-TemporaryFile -Confirm | Out-Null
+    $tmpErrorsLogPath = New-TemporaryFile -Confirm | Out-Null
 
-    New-Item -Type File -Path $outputLogPath | Out-Null
-    New-Item -Type File -Path $errorsLogPath | Out-Null
-
-    $proc = Start-Process -FilePath $filePath -ArgumentList $argumentList -WorkingDirectory $workingDirectory -Wait -NoNewWindow -PassThru -RedirectStandardError $errorsLogPath -RedirectStandardOutput $outputLogPath
+    $proc = Start-Process -FilePath $filePath -ArgumentList $argumentList -WorkingDirectory $workingDirectory -Wait -NoNewWindow -PassThru -RedirectStandardError $tmpErrorsLogPath -RedirectStandardOutput $tmpOutputLogPath
 
     $result.exitCode = $proc.ExitCode    
-    $result.errors += Get-Content -Path $errorsLogPath
-    $result.output += Get-Content -Path $outputLogPath
-
+    $result.output += Get-Content -Path $tmpOutputLogPath
+    $result.errors += Get-Content -Path $tmpErrorsLogPath
+    
     if ($result.exitCode -eq 0) {
-        Remove-Item -Path $errorsLogPath -Force | Out-Null
+        Remove-Item -Path $tmpErrorsLogPath -Force | Out-Null
     }
     else {
+        $timestamp = Get-Date -Format "yyyymmddhhmmssfff"
+
+        $errorsLogPath = Join-Path $workingDirectory "$timestamp-errors.log"
+
+        Move-Item -Path $tmpErrorsLogPath -Destination $errorsLogPath -Force | Out-Null
+
         $result.exitMessage = "Failed to execute '$filePath $($argumentList | Join-String -Separator " ")'. Check '$errorsLogPath' for more details."
     }
 
-    Remove-Item -Path $outputLogPath -Force | Out-Null
+    Remove-Item -Path $tmpOutputLogPath -Force | Out-Null
 
     return $result
 }
@@ -64,6 +65,16 @@ function Substring {
     }
 
     $String.Substring($Start, $actualLength)
+}
+
+function MaskString($string, [string[]] $mask) {
+    $maskedString = $string
+
+    foreach ($m in $mask) {
+        $maskedString = $maskedString -replace $m, "********"
+    }
+
+    return $maskedString
 }
 
 function UnlockRepo($migrationId, $org, $repo, $token){
