@@ -15,8 +15,8 @@ function ExecProcess($filePath, $argumentList, $workingDirectory) {
         errors      = @()
         output      = @()
     }
-    $tmpOutputLogPath = New-TemporaryFile -Confirm | Out-Null
-    $tmpErrorsLogPath = New-TemporaryFile -Confirm | Out-Null
+    $tmpOutputLogPath = New-TemporaryFile | Out-Null
+    $tmpErrorsLogPath = New-TemporaryFile | Out-Null
 
     $proc = Start-Process -FilePath $filePath -ArgumentList $argumentList -WorkingDirectory $workingDirectory -Wait -NoNewWindow -PassThru -RedirectStandardError $tmpErrorsLogPath -RedirectStandardOutput $tmpOutputLogPath
 
