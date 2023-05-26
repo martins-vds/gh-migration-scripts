@@ -113,13 +113,13 @@ $executionDuration = Measure-Command {
                 Write-Host "Queueing migration for repo '$repoName'..." -ForegroundColor Cyan
 
                 if ($LockSourceRepos) {
-                    $lockSourceRepos = "--lock-source-repo"
+                    $lockRepos = "--lock-source-repo"
                 }
                 else {
-                    $lockSourceRepos = ""
+                    $lockRepos = ""
                 }
                 
-                $migrationID = ExecAndGetMigrationID { gh gei migrate-repo $lockSourceRepos --queue-only --github-source-org $SourceOrg --source-repo $repoName --github-target-org $TargetOrg --target-repo $repoName --target-repo-visibility $repoVisibility --github-source-pat $sourcePat --github-target-pat $targetPat }
+                $migrationID = ExecAndGetMigrationID { gh gei migrate-repo $lockRepos --queue-only --github-source-org $SourceOrg --source-repo $repoName --github-target-org $TargetOrg --target-repo $repoName --target-repo-visibility $repoVisibility --github-source-pat $sourcePat --github-target-pat $targetPat }
 
                 if ($lastexitcode -eq 0) { 
                     $RepoMigrations[$repoName] = @{
