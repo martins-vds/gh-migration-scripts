@@ -16,11 +16,11 @@ function ExecProcess($filePath, $argumentList, $workingDirectory) {
         output      = @()
     }
 
-    $timestamp = (Get-Date).ToString("yyyyMMddHHmmssfff")
+    # $timestamp = (Get-Date).ToString("yyyyMMddHHmmssfff")
     $guid = [guid]::NewGuid().ToString()
 
-    $tmpOutputLogPath = Join-Path $workingDirectory "output-$guid-$timestamp.log"
-    $tmpErrorsLogPath = Join-Path $workingDirectory "errors-$guid-$timestamp.log"
+    $tmpOutputLogPath = Join-Path $workingDirectory "output-$guid.log"
+    $tmpErrorsLogPath = Join-Path $workingDirectory "errors-$guid.log"
 
     New-Item -Path $tmpOutputLogPath -ItemType File -Force | Out-Null
     New-Item -Path $tmpErrorsLogPath -ItemType File -Force | Out-Null 
@@ -32,13 +32,13 @@ function ExecProcess($filePath, $argumentList, $workingDirectory) {
     $result.errors += Get-Content -Path $tmpErrorsLogPath
     
     if ($result.exitCode -eq 0) {
-        Remove-Item -Path $tmpErrorsLogPath -Force | Out-Null
+        Remove-Item -Path $tmpErrorsLogPath -Force -ErrorAction SilentlyContinue | Out-Null
     }
     else {
         $result.exitMessage = "Failed to execute '$filePath $($argumentList | Join-String -Separator " ")'. Check '$tmpErrorsLogPath' for more details."
     }
 
-    Remove-Item -Path $tmpOutputLogPath -Force | Out-Null
+    Remove-Item -Path $tmpOutputLogPath -Force -ErrorAction SilentlyContinue | Out-Null
 
     return $result
 }
