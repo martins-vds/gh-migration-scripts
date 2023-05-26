@@ -58,7 +58,7 @@ function Post ($uri, $body, $token) {
 }
 
 function Delete ($uri, $token) {
-    return Invoke-RestMethod -Uri $uri -Method Delete -Headers @{"Authorization" = "token $token" }
+    return Invoke-RestMethod -Uri $uri -Method Delete -Headers $(BuildHeaders -token $token)
 }
 
 function EnsureDirectoryExists($outputDirectory) {
@@ -111,4 +111,14 @@ function SaveTo-Json(
     else {
         $Data | ConvertTo-Json -Depth 100 | Out-File -FilePath $OutputFile -Encoding utf8
     }
+}
+
+function MaskString($string, [string[]] $mask) {
+    $maskedString = $string
+
+    foreach ($m in $mask) {
+        $maskedString = $maskedString -replace $m, "********"
+    }
+
+    return $maskedString
 }
