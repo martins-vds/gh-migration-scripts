@@ -114,6 +114,7 @@ $executionDuration = Measure-Command {
 
                 if ($ArchiveSourceRepos) {
                     try {
+                        Write-Host "Archiving repo '$repoName' in source org '$SourceOrg'..." -ForegroundColor White
                         ArchiveRepo -org $SourceOrg -repo $repoName -token $sourcePat
                     }
                     catch {
@@ -206,6 +207,7 @@ $executionDuration = Measure-Command {
                 finally {
                     if ($archiveSourceRepos) {
                         try {
+                            Write-Host "Unarchiving repo '$repoName' in target org '$targetOrg'..." -ForegroundColor White
                             UnarchiveRepo -org $targetOrg -repo $repoName -token $targetPat
                         }
                         catch {
