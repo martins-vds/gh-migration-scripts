@@ -152,3 +152,15 @@ function GetRepoSbom ($org, $repo, $token) {
         return $null
     }
 }
+
+function ArchiveRepo ($org, $repo, $token) {
+    $archiveApi = "https://api.github.com/repos/$org/$repo"
+
+    return Patch -uri $archiveApi -token $token -body @{archived = $true}
+}
+
+function UnarchiveRepo ($org, $repo, $token) {
+    $archiveApi = "https://api.github.com/repos/$org/$repo"
+
+    return Patch -uri $archiveApi -token $token -body @{archived = $false}
+}

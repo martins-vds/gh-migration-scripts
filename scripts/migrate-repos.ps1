@@ -33,7 +33,7 @@ param (
     $AllowPublicRepos,
     [Parameter(Mandatory = $false)]
     [switch]
-    $LockSourceRepos,
+    $ArchiveSourceRepos,
     [Parameter(Mandatory = $false)]
     [string]
     $SourceToken,
@@ -112,12 +112,16 @@ $executionDuration = Measure-Command {
             if (-Not(ExistsRepo -org $TargetOrg -repo $repoName -token $targetPat)) {
                 Write-Host "Queueing migration for repo '$repoName'..." -ForegroundColor Cyan
 
-                if ($LockSourceRepos) {
-                    $migrationID = ExecAndGetMigrationID { gh gei migrate-repo --lock-source-repo --queue-only --github-source-org $SourceOrg --source-repo $repoName --github-target-org $TargetOrg --target-repo $repoName --target-repo-visibility $repoVisibility --github-source-pat $sourcePat --github-target-pat $targetPat }
-                }
-                else {
-                    $migrationID = ExecAndGetMigrationID { gh gei migrate-repo --queue-only --github-source-org $SourceOrg --source-repo $repoName --github-target-org $TargetOrg --target-repo $repoName --target-repo-visibility $repoVisibility --github-source-pat $sourcePat --github-target-pat $targetPat }
-                }                           
+                if ($ArchiveSourceRepos) {
+                    try {
+                        ArchiveRepo -org $SourceOrg -repo $repoName -token $sourcePat
+                    }
+                    catch {
+                        Write-Host "Unable to archive repo '$repoName' in source org '$SourceOrg'. Reason: $($_.Exception.Message)" -ForegroundColor Yellow
+                    }
+                }                          
+
+                $migrationID = ExecAndGetMigrationID { gh gei migrate-repo --queue-only --github-source-org $SourceOrg --source-repo $repoName --github-target-org $TargetOrg --target-repo $repoName --target-repo-visibility $repoVisibility --github-source-pat $sourcePat --github-target-pat $targetPat }
 
                 if ($lastexitcode -eq 0) { 
                     $RepoMigrations[$repoName] = @{
@@ -133,7 +137,16 @@ $executionDuration = Measure-Command {
                         State       = "Failed"
                     }
                     Write-Host "Failed to queue migration for repo '$repoName'." -ForegroundColor Red
-                }       
+                }
+                
+                if($ArchiveSourceRepos){
+                    try {
+                        UnarchiveRepo -org $TargetOrgOrg -repo $repoName -token $targetPat
+                    }
+                    catch {
+                        Write-Host "Unable to unarchive repo '$repoName' in target org '$TargetOrg'. Reason: $($_.Exception.Message)" -ForegroundColor Yellow
+                    }
+                }
             }
             else {
                 $RepoMigrations[$repoName] = @{
@@ -168,7 +181,7 @@ $executionDuration = Measure-Command {
                         $repoMigrations[$repoName].State = "Succeeded"
                         $succeeded++
 
-                        if($LockSourceRepos){
+                        if ($ArchiveSourceRepos) {
                             try {
                                 UnlockRepo -org $SourceOrg -repo $repoName -migrationId $repoMigrationId -token $sourcePat
                             }
