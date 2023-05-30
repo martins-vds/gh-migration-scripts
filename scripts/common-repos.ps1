@@ -147,7 +147,7 @@ function GetRepoSbom ($org, $repo, $token) {
         }
     } while ($retriesLeft -gt 0)
 
-    if($retriesLeft -eq 0) {
+    if ($retriesLeft -eq 0) {
         Write-Host "The sbom for repo '$repo' in org '$org' was not generated in time after 3 retries. An empty sbom will be returned." -ForegroundColor Yellow
         return $null
     }
@@ -156,11 +156,25 @@ function GetRepoSbom ($org, $repo, $token) {
 function ArchiveRepo ($org, $repo, $token) {
     $archiveApi = "https://api.github.com/repos/$org/$repo"
 
-    return Patch -uri $archiveApi -token $token -body @{archived = $true}
+    try {
+        Patch -uri $archiveApi -token $token -body @{archived = $true } | Out-Null
+    }
+    catch {
+        if ($_.Exception.Response.StatusCode -ne [System.Net.HttpStatusCode]::Forbidden) {
+            throw
+        }
+    }
 }
 
 function UnarchiveRepo ($org, $repo, $token) {
     $archiveApi = "https://api.github.com/repos/$org/$repo"
 
-    return Patch -uri $archiveApi -token $token -body @{archived = $false}
+    try {
+        Patch -uri $archiveApi -token $token -body @{archived = $false } | Out-Null
+    }
+    catch {
+        if ($_.Exception.Response.StatusCode -ne [System.Net.HttpStatusCode]::Forbidden) {
+            throw
+        }
+    }
 }

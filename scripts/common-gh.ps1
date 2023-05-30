@@ -81,14 +81,28 @@ function ArchiveRepo ($org, $repo, $token) {
     $archiveApi = "https://api.github.com/repos/$org/$repo"
     $body = @{archived = $true }
 
-    return Invoke-RestMethod -Method Patch -Uri $archiveApi -Headers $(BuildHeaders -token $token) -body $($body | ConvertTo-Json -Depth 100)
+    try {
+        Invoke-RestMethod -Method Patch -Uri $archiveApi -Headers $(BuildHeaders -token $token) -body $($body | ConvertTo-Json -Depth 100) | Out-Null
+    }
+    catch {
+        if ($_.Exception.Response.StatusCode -ne [System.Net.HttpStatusCode]::Forbidden) {
+            throw
+        }
+    }
 }
 
 function UnarchiveRepo ($org, $repo, $token) {
     $archiveApi = "https://api.github.com/repos/$org/$repo"
     $body = @{archived = $false }
-    
-    return Invoke-RestMethod -Method Patch -Uri $archiveApi -Headers $(BuildHeaders -token $token) -body $($body | ConvertTo-Json -Depth 100) 
+
+    try {
+        Invoke-RestMethod -Method Patch -Uri $archiveApi -Headers $(BuildHeaders -token $token) -body $($body | ConvertTo-Json -Depth 100) | Out-Null
+    }
+    catch {
+        if ($_.Exception.Response.StatusCode -ne [System.Net.HttpStatusCode]::Forbidden) {
+            throw
+        }
+    }
 }
 
 function Delete ($uri, $token) {
