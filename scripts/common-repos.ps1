@@ -171,10 +171,15 @@ function UnarchiveRepo ($org, $repo, $token) {
 
     try {
         Patch -uri $archiveApi -token $token -body @{archived = $false } | Out-Null
+        Write-Host "Successfully unarchived repo '$repo' in org '$org'." -ForegroundColor Green
     }
     catch {
-        if ($_.Exception.Response.StatusCode -ne [System.Net.HttpStatusCode]::Forbidden) {
+        if ($_.Exception.Response.StatusCode -ne [System.Net.HttpStatusCode]::Forbidden -or $_.Exception.Response.StatusCode -ne [System.Net.HttpStatusCode]::NotFound) {
             throw
+        }
+
+        if ($_.Exception.Response.StatusCode -eq [System.Net.HttpStatusCode]::NotFound) {
+            Write-Host "The repo '$repo' does not exist in org '$org'. No operation will be performed." -ForegroundColor Yellow
         }
     }
 }

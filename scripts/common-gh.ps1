@@ -27,9 +27,18 @@ function ExecProcess($filePath, $argumentList, $workingDirectory) {
     $proc = Start-Process -FilePath $filePath -ArgumentList $argumentList -WorkingDirectory $workingDirectory -Wait -NoNewWindow -PassThru -RedirectStandardError $tmpErrorsLogPath -RedirectStandardOutput $tmpOutputLogPath
 
     $result.exitCode = $proc.ExitCode
+
+    try {
+        $proc.Close()
+        $proc.Dispose()
+        $proc = $null
+    }
+    catch {
+    }
+
     $result.output += Get-Content -Path $tmpOutputLogPath
     $result.errors += Get-Content -Path $tmpErrorsLogPath
-    
+
     if ($result.exitCode -eq 0) {
         Remove-Item -Path $tmpErrorsLogPath -Force -ErrorAction SilentlyContinue | Out-Null
     }
