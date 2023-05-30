@@ -178,33 +178,48 @@ $executionDuration = Measure-Command {
                         $succeeded++                        
                     }
                     else {
-                        $maskedExitMessage = MaskString -string $waitOutput.exitMessage -mask $sourcePat, $targetPat
+                        $failed = $waitOutput.errors | Where-Object { $_ -match "migration\s+$repoMigrationId\s+failed\s+for\s+$repoName" } | Select-Object -First 1
 
-                        Write-Host "Failed to wait for migration of repo '$repoName'. Reason: $maskedExitMessage" -ForegroundColor Red
+                        if (![string]::IsNullOrWhiteSpace($failed)) {
+                            Write-Host "Failed to migrate repo '$repoName'. Dowloading migration logs..." -ForegroundColor Red
                 
-                        $repoMigrations[$repoName].State = "Failed"
-                        $failed++ 
+                            $repoMigrations[$repoName].State = "Failed"
+                            $failed++ 
                 
-                        try {
-                            $dowloadLogsOutput = ExecProcess -filePath gh -argumentList @("gei", "download-logs", "--github-target-org", "$TargetOrg", "--target-repo", "$repoName", "--github-target-pat", "$targetPat", "--migration-log-file", "migration-log-$TargetOrg-$repoName-$(Get-Date -Format "yyyyMMddHHmmss").log") -workingDirectory $using:PSScriptRoot
-
-                            if ($dowloadLogsOutput.exitCode -ne 0) {
-                                $maskedExitMessage = MaskString -string $dowloadLogsOutput.exitMessage -mask $sourcePat, $targetPat
-                                Write-Host "Failed to download migration logs for repo '$repoName'. Reason: $maskedExitMessage" -ForegroundColor Red
-                            }
-                        }
-                        catch {
-                            Write-Host "Failed to download migration logs for repo '$repoName'. Reason: $($_.Exception.Message)" -ForegroundColor Red
-                        }
-
-                        if ($archiveSourceRepos) {
                             try {
-                                Write-Host "Unarchiving repo '$repoName' in target org '$targetOrg'..." -ForegroundColor White
-                                UnarchiveRepo -org $targetOrg -repo $repoName -token $targetPat
+
+                                $migrationLogFile = "migration-log-$TargetOrg-$repoName-$(Get-Date -Format "yyyyMMddHHmmss").log"
+                                $dowloadLogsOutput = ExecProcess -filePath gh -argumentList @("gei", "download-logs", "--github-target-org", "$TargetOrg", "--target-repo", "$repoName", "--github-target-pat", "$targetPat", "--migration-log-file", $migrationLogFile) -workingDirectory $using:PSScriptRoot
+
+                                if ($dowloadLogsOutput.exitCode -eq 0) {
+                                    Write-Host "Migration logs for repo '$repoName' saved to '$migrationLogFile'." -ForegroundColor Yellow
+                                }
+                                else {
+                                    $maskedExitMessage = MaskString -string $dowloadLogsOutput.exitMessage -mask $sourcePat, $targetPat
+                                    Write-Host "Failed to download migration logs for repo '$repoName'. Reason: $maskedExitMessage" -ForegroundColor Red
+                                }
                             }
                             catch {
-                                Write-Host "Unable to unarchive repo '$repoName' in target org '$targetOrg'. Reason: $($_.Exception.Message)" -ForegroundColor Yellow
+                                Write-Host "Failed to download migration logs for repo '$repoName'. Reason: $($_.Exception.Message)" -ForegroundColor Red
                             }
+
+                            if ($archiveSourceRepos) {
+                                try {
+                                    Write-Host "Unarchiving repo '$repoName' in target org '$targetOrg'..." -ForegroundColor White
+                                    UnarchiveRepo -org $targetOrg -repo $repoName -token $targetPat
+                                }
+                                catch {
+                                    Write-Host "Unable to unarchive repo '$repoName' in target org '$targetOrg'. Reason: $($_.Exception.Message)" -ForegroundColor Yellow
+                                }
+                            }
+                        }
+                        else {
+                            $repoMigrations[$repoName].State = "Unknown"
+                            $unknown++
+
+                            $maskedExitMessage = MaskString -string $waitOutput.exitMessage -mask $sourcePat, $targetPat
+
+                            Write-Host "Failed to wait for migration of repo '$repoName' to finish. Reason: $maskedExitMessage" -ForegroundColor Red
                         }
                     }
                 }
