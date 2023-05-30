@@ -152,6 +152,8 @@ $executionDuration = Measure-Command {
         $reposToMigrate | Foreach-Object -Parallel {
             . $using:PSScriptRoot\common-gh.ps1
             
+            $archiveSourceRepos = $using:ArchiveSourceRepos
+
             $repoName = $_.name
 
             $sourcePat = $using:sourcePat
@@ -202,7 +204,7 @@ $executionDuration = Measure-Command {
                     Write-Host "Failed to wait for migration of repo '$repoName' to finish. Reason: $($_.Exception.Message)" -ForegroundColor Red
                 }
                 finally {
-                    if ($ArchiveSourceRepos) {
+                    if ($archiveSourceRepos) {
                         try {
                             UnarchiveRepo -org $targetOrg -repo $repoName -token $targetPat
                         }
