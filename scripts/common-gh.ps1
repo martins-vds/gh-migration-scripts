@@ -77,12 +77,30 @@ function MaskString($string, [string[]] $mask) {
     return $maskedString
 }
 
-function UnlockRepo($migrationId, $org, $repo, $token) {
-    $unlockUri = "https://api.github.com/orgs/$org/migrations/$migrationId/repos/$repo/lock"
+function ArchiveRepo ($org, $repo, $token) {
+    $archiveApi = "https://api.github.com/repos/$org/$repo"
+    $body = @{archived = $true }
 
-    Delete -uri $unlockUri -token $token | Out-Null
+    return Invoke-RestMethod -Method Patch -Uri $archiveApi -Headers $(BuildHeaders -token $token) -body $($body | ConvertTo-Json -Depth 100)
+}
+
+function UnarchiveRepo ($org, $repo, $token) {
+    $archiveApi = "https://api.github.com/repos/$org/$repo"
+    $body = @{archived = $false }
+    
+    return Invoke-RestMethod -Method Patch -Uri $archiveApi -Headers $(BuildHeaders -token $token) -body $($body | ConvertTo-Json -Depth 100) 
 }
 
 function Delete ($uri, $token) {
-    return Invoke-RestMethod -Uri $uri -Method Delete -Headers @{"Authorization" = "token $token" }
+    return Invoke-RestMethod -Uri $uri -Method Delete -Headers $(BuildHeaders -token $token)
+}
+
+function BuildHeaders ($token) {
+    $headers = @{
+        Accept                 = "application/vnd.github+json"
+        Authorization          = "Bearer $token"
+        "X-GitHub-Api-Version" = "2022-11-28"
+    }
+
+    return $headers
 }
