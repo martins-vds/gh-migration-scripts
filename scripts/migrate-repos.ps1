@@ -138,15 +138,6 @@ $executionDuration = Measure-Command {
                     }
                     Write-Host "Failed to queue migration for repo '$repoName'." -ForegroundColor Red
                 }
-                
-                if($ArchiveSourceRepos){
-                    try {
-                        UnarchiveRepo -org $TargetOrgOrg -repo $repoName -token $targetPat
-                    }
-                    catch {
-                        Write-Host "Unable to unarchive repo '$repoName' in target org '$TargetOrg'. Reason: $($_.Exception.Message)" -ForegroundColor Yellow
-                    }
-                }
             }
             else {
                 $RepoMigrations[$repoName] = @{
@@ -165,6 +156,8 @@ $executionDuration = Measure-Command {
 
             $sourcePat = $using:sourcePat
             $targetPat = $using:targetPat
+            $targetOrg = $using:TargetOrg
+
             $repoMigrations = $using:RepoMigrations            
             $repoMigrationId = $repoMigrations[$repoName].MigrationId
             $repoMigrationState = $repoMigrations[$repoName].State
@@ -179,16 +172,7 @@ $executionDuration = Measure-Command {
                         Write-Host "Successfully migrated repo '$repoName'." -ForegroundColor Green
 
                         $repoMigrations[$repoName].State = "Succeeded"
-                        $succeeded++
-
-                        if ($ArchiveSourceRepos) {
-                            try {
-                                UnlockRepo -org $SourceOrg -repo $repoName -migrationId $repoMigrationId -token $sourcePat
-                            }
-                            catch {
-                                Write-Host "Failed to unlock repo '$repoName' in source org '$SourceOrg'. Reason: $($_.Exception.Message)" -ForegroundColor Red
-                            }
-                        }
+                        $succeeded++                        
                     }
                     else {
                         $maskedExitMessage = MaskString -string $waitOutput.exitMessage -mask $sourcePat, $targetPat
@@ -216,6 +200,16 @@ $executionDuration = Measure-Command {
                     $unknown++
 
                     Write-Host "Failed to wait for migration of repo '$repoName' to finish. Reason: $($_.Exception.Message)" -ForegroundColor Red
+                }
+                finally {
+                    if ($ArchiveSourceRepos) {
+                        try {
+                            UnarchiveRepo -org $targetOrg -repo $repoName -token $targetPat
+                        }
+                        catch {
+                            Write-Host "Unable to unarchive repo '$repoName' in target org '$targetOrg'. Reason: $($_.Exception.Message)" -ForegroundColor Yellow
+                        }
+                    }
                 }     
             }
         } 
