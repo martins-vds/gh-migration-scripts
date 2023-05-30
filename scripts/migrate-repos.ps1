@@ -196,6 +196,16 @@ $executionDuration = Measure-Command {
                         catch {
                             Write-Host "Failed to download migration logs for repo '$repoName'. Reason: $($_.Exception.Message)" -ForegroundColor Red
                         }
+
+                        if ($archiveSourceRepos) {
+                            try {
+                                Write-Host "Unarchiving repo '$repoName' in target org '$targetOrg'..." -ForegroundColor White
+                                UnarchiveRepo -org $targetOrg -repo $repoName -token $targetPat
+                            }
+                            catch {
+                                Write-Host "Unable to unarchive repo '$repoName' in target org '$targetOrg'. Reason: $($_.Exception.Message)" -ForegroundColor Yellow
+                            }
+                        }
                     }
                 }
                 catch {
