@@ -2,6 +2,7 @@
 
 - [Migration Plan v2.0 - DRAFT](#migration-plan-v20---draft)
   - [Prerequisites](#prerequisites)
+  - [Scope of the migration](#scope-of-the-migration)
   - [Step 1: Install Git for Windows](#step-1-install-git-for-windows)
   - [Step 2: Install PowerShell 7.3.0](#step-2-install-powershell-730)
   - [Step 3: Install GitHub CLI](#step-3-install-github-cli)
@@ -23,10 +24,28 @@
   - [Appendix](#appendix)
     - [Create Personal Access Tokens](#create-personal-access-tokens)
     - [Authorizing a personal access token for use with SAML single sign-on](#authorizing-a-personal-access-token-for-use-with-saml-single-sign-on)
+    - [Changing a remote repository's URL](#changing-a-remote-repositorys-url)
 
 ## Prerequisites
 
 1. To migrate an organization, you must be an organization owner for the **source organization**. Additionally, you must be an **enterprise owner on the destination enterprise** account
+
+## Scope of the migration
+
+The following items will be migrated from the source organization to the destination organization:
+
+- Repositories and their contents (including issues, pull requests, releases, wikis, etc.)
+- Teams, team members and team permissions
+- Organization, repository and environment secrets
+
+Anything not explicitly listed above **will not** be migrated, *including but not limited to*:
+
+- GitHub Apps
+- GitHub Packages
+- Projects
+- Discussions
+- Webhooks
+- SSH keys
 
 ## Step 1: Install Git for Windows
 
@@ -131,11 +150,9 @@ To generate the list of allowed GitHub Actions in use by the target organization
 .\scripts\create-actions-allow-list.ps1 -ActionsFile .\actions.csv
 ```
 
-Copy the output of the script and paste it into the allow-list in the GitHub enterprise/organization settings page for the destination organization.
+Copy the output of the script and paste it into the allow-list in the GitHub enterprise/organization settings page for the destination organization. The link to the allow-list is: <https://github.com/enterprises/DESTINATION/settings/actions>. Replace `DESTINATION` with the destination enterprise.
 
 ![GitHub Actions Allow List Settings](./images/allow-list.png)
-
-The link to the allow-list is: <https://github.com/enterprises/DESTINATION/settings/actions>. Replace `DESTINATION` with the destination enterprise.
 
 ## Step 10: Create a slug mapping file for users in the source organization
 
@@ -171,8 +188,6 @@ Once the script has completed, you will have a CSV file with a list of repositor
 
 ## Step 12: Migrate your repositories
 
-> Note: This script uses the `repos.csv` file generated in the previous step
-
 To migrate repositories, run the script `migrate-repos.ps1`:
 
 ```posh
@@ -187,6 +202,8 @@ Replace the placeholders in the command above with the following values.
 |DESTINATION|Name of the destination organization. It must be created before running this script.|
 
 This step can take a long time to complete depending on the number of repositories you are migrating. You can use the `--parallel` flag to specify the number of repositories to migrate in parallel. The default is `5`.
+
+> Note: After the repositories have been migrated, anyone who has cloned the repositories from the source organization must update their local repositories to point to the new location in the destination organization. For more information, see [Appendix: Changing a remote repository's URL](#changing-a-remote-repositorys-url)
 
 ## Step 13: Migrate your teams
 
@@ -209,6 +226,8 @@ Replace the placeholders in the command above with the following values.
 
 ## Step 14: Migrate your repository and environment secrets
 
+> Note: If you don't own the repositories in the source organization, you must ask the repository owners to export the repository secrets and send them to you. You can then import the repository secrets in the destination organization.
+
 1. Export the repository secrets for each repository in the source organization which you want to migrate following the instructions in [**Exporting repository secrets**](https://github.com/martins-vds/export-secrets-action).
    - This is a custom GitHub Action that you must add to each repository in the source organization which you want to migrate.
    - It will export the secrets to a CSV file and upload it to GitHub as an artifact.
@@ -220,6 +239,8 @@ Replace the placeholders in the command above with the following values.
       ```
 
    - If you **don't want** to migrate repository secrets using scripts, you can **skip the next step** and manually add the secrets to the destination organization.
+
+      > Note: Secrets values in the CSV file might have been escaped with double quotes in order to not break the CSV format. You must remove any extra double quotes from the secret values before adding them to the destination organization.
 
 2. (Optional) Import the repository secrets for each repository in the destination organization which you want to migrate by running the script `migrate-repo-secrets.ps1`:
 
@@ -274,6 +295,7 @@ Replace the placeholders in the command above with the following values.
 
 1. Check if all the repositories have been migrated
    - If there are missing repositories in the destination organization, check the repositories file and confirm that the all the repositories you want to migrate are listed in the file
+   - If there are submodules in the repositories, check if the submodules have been migrated and then update the submodule URLs in the repositories
 2. Check if all the teams have been migrated and the members have been added to the teams
    - If users are missing from the teams, check the slug mapping file and confirm that all the users are listed in the file
 3. Check if teams have been added to the repositories and their permissions have been set correctly
@@ -314,3 +336,20 @@ Replace the placeholders in the command above with the following values.
 3. In the left sidebar, click `Personal access tokens`.
 4. Next to the token you'd like to authorize, click `Configure SSO`. If you don't see Configure SSO, ensure that you have authenticated at least once through your SAML IdP to access resources on GitHub.com
 5. In the dropdown menu, to the right of the organization you'd like to authorize the token for, click `Authorize`.
+
+### Changing a remote repository's URL
+
+1. Open any command line interface (CLI) and navigate to the local repository you want to work with.
+2. List your existing remotes in order to get the name of the remote you want to change.
+
+    ```posh
+    git remote -v
+    ```
+
+3. Change your remote's URL with the new URL for the remote repository.
+
+    ```posh
+    git remote set-url <REMOTE_NAME> <REMOTE_URL>
+    ```
+
+    Replace `<REMOTE_NAME>` with the name of the remote you want to change (for example, `origin`). Replace `<REMOTE_URL>` with the new URL you want to use for your remote repository.
