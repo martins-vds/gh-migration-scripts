@@ -212,10 +212,11 @@ This step can take a long time to complete depending on the number of repositori
 To migrate teams, run the script `migrate-teams.ps1`:
 
 ```posh
-.\scripts\migrate-teams.ps1 -SourceOrg <SOURCE> -TargetOrg <DESTINATION> -SlugMappingFile .\slug-mapping.csv -SkipEmptySlugMappings
+# If you want to add team members to the destination organization, run the script with the -AddTeamMembers flag
+.\scripts\migrate-teams.ps1 -SourceOrg <SOURCE> -TargetOrg <DESTINATION> -SlugMappingFile .\slug-mapping.csv -SkipEmptySlugMappings [-AddTeamMembers]
 ```
 
-Replace the placeholders in the command above with the following values.
+Replace the placeholders in the command above with the following values:
 
 |Placeholder|Value|
 |-----------|-----|
