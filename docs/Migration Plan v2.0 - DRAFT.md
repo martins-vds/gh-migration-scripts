@@ -191,7 +191,7 @@ Once the script has completed, you will have a CSV file with a list of repositor
 To migrate repositories, run the script `migrate-repos.ps1`:
 
 ```posh
-.\scripts\migrate-repos.ps1 -SourceOrg <SOURCE> -TargetOrg <DESTINATION> -ReposFile .\repos.csv -Parallel 5
+.\scripts\migrate-repos.ps1 -SourceOrg <SOURCE> -TargetOrg <DESTINATION> -ReposFile .\repos.csv -Parallel 5 -ArchiveSourceRepos
 ```
 
 Replace the placeholders in the command above with the following values.
