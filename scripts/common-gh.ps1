@@ -26,6 +26,8 @@ function ExecProcess($filePath, $argumentList, $workingDirectory) {
 
     $proc = Start-Process -FilePath $filePath -ArgumentList $argumentList -WorkingDirectory $workingDirectory -Wait -NoNewWindow -PassThru -RedirectStandardError $tmpErrorsLogPath -RedirectStandardOutput $tmpOutputLogPath
 
+    $proc.WaitForExit()
+
     $result.exitCode = $proc.ExitCode
 
     try {
