@@ -43,7 +43,7 @@ function ExecProcess($filePath, $argumentList, $workingDirectory) {
         Remove-Item -Path $tmpErrorsLogPath -Force -ErrorAction SilentlyContinue | Out-Null
     }
     else {
-        $result.exitMessage = "Failed to execute '$filePath $($argumentList | Join-String -Separator " ")'. Check '$tmpErrorsLogPath' for more details."
+        $result.exitMessage = "[Exit Code = $($result.exitCode)] Failed to execute '$filePath $($argumentList | Join-String -Separator " ")'. Check '$tmpErrorsLogPath' for more details."
     }
 
     Remove-Item -Path $tmpOutputLogPath -Force -ErrorAction SilentlyContinue | Out-Null
@@ -88,7 +88,7 @@ function MaskString($string, [string[]] $mask) {
 
 function ArchiveRepo ($org, $repo, $token) {
     $archiveApi = "https://api.github.com/repos/$org/$repo"
-    $body = @{archived = $true }
+    $body = @{ archived = $true }
 
     try {
         Invoke-RestMethod -Method Patch -Uri $archiveApi -Headers $(BuildHeaders -token $token) -body $($body | ConvertTo-Json -Depth 100) | Out-Null
@@ -102,7 +102,7 @@ function ArchiveRepo ($org, $repo, $token) {
 
 function UnarchiveRepo ($org, $repo, $token) {
     $archiveApi = "https://api.github.com/repos/$org/$repo"
-    $body = @{archived = $false }
+    $body = @{ archived = $false }
 
     try {
         Invoke-RestMethod -Method Patch -Uri $archiveApi -Headers $(BuildHeaders -token $token) -body $($body | ConvertTo-Json -Depth 100) | Out-Null
@@ -122,6 +122,7 @@ function BuildHeaders ($token) {
     $headers = @{
         Accept                 = "application/vnd.github+json"
         Authorization          = "Bearer $token"
+        "Content-Type"         = "application/json"
         "X-GitHub-Api-Version" = "2022-11-28"
     }
 
