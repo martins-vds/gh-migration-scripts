@@ -17,7 +17,10 @@ param (
     $TargetToken,
     [Parameter(Mandatory = $false)]
     [switch]
-    $SkipEmptySlugMappings
+    $SkipEmptySlugMappings,
+    [Parameter(Mandatory = $false)]
+    [switch]
+    $AddTeamMembers
 )
 
 $ErrorActionPreference = 'Stop'
@@ -84,34 +87,6 @@ $sourceTeams | ForEach-Object {
     }
 }
 
-Write-Host "Adding team members in the organization '$TargetOrg'..." -ForegroundColor Blue
-
-$sourceTeams | ForEach-Object {
-    $sourceTeam = $_    
-    $sourceTeamMembers = GetTeamMembers -org $SourceOrg -team $sourceTeam.slug -token $sourcePat
-
-    $targetTeam = $newTeams | Where-Object -Property slug -EQ -Value $sourceTeam.slug
-
-    $sourceTeamMembers | ForEach-Object {
-        $sourceTeamMember = $_
-        $sourceTeamMemberRole = GetTeamMemberRole -org $SourceOrg -team $sourceTeam.slug -teamMember $sourceTeamMember.login -token $sourcePat
-        
-        $targetTeamMemberSlug = $slugMappings | Where-Object -Property slug_source_org -EQ -Value $sourceTeamMember.login | Select-Object -First 1 -ExpandProperty slug_target_org
-
-        if (-Not($SkipEmptySlugMappings) -or -Not([string]::IsNullOrWhiteSpace($targetTeamMemberSlug))) {
-
-            if ([string]::IsNullOrWhiteSpace($targetTeamMemberSlug)) {
-                $targetTeamMemberSlug = $sourceTeamMember.login
-            }
-
-            UpdateTeamMemberRole -org $TargetOrg -team $targetTeam.slug -teamMember $targetTeamMemberSlug -role $sourceTeamMemberRole -token $targetPat
-        }
-        else {
-            Write-Host "The team member '$($sourceTeamMember.login)' cannot be added to team '$($targetTeam.name)' in org '$TargetOrg'. The slug mapping is empty." -ForegroundColor Yellow
-        }
-    }
-}
-
 Write-Host "Adding team repositories in the organization '$TargetOrg'..." -ForegroundColor Blue
 
 $defaultPermissions = @("pull", "triage", "push", "maintain", "admin")
@@ -131,6 +106,36 @@ $sourceTeams | ForEach-Object {
         }
         else {
             Write-Host "The team '$($targetTeam.name)' cannot be added to repo '$($sourceTeamRepo.name)' in org '$TargetOrg'. This repo does not exist." -ForegroundColor Yellow
+        }
+    }
+}
+
+if ($AddTeamMembers) {
+    Write-Host "Adding team members in the organization '$TargetOrg'..." -ForegroundColor Blue
+
+    $sourceTeams | ForEach-Object {
+        $sourceTeam = $_    
+        $sourceTeamMembers = GetTeamMembers -org $SourceOrg -team $sourceTeam.slug -token $sourcePat
+
+        $targetTeam = $newTeams | Where-Object -Property slug -EQ -Value $sourceTeam.slug
+
+        $sourceTeamMembers | ForEach-Object {
+            $sourceTeamMember = $_
+            $sourceTeamMemberRole = GetTeamMemberRole -org $SourceOrg -team $sourceTeam.slug -teamMember $sourceTeamMember.login -token $sourcePat
+        
+            $targetTeamMemberSlug = $slugMappings | Where-Object -Property slug_source_org -EQ -Value $sourceTeamMember.login | Select-Object -First 1 -ExpandProperty slug_target_org
+
+            if (-Not($SkipEmptySlugMappings) -or -Not([string]::IsNullOrWhiteSpace($targetTeamMemberSlug))) {
+
+                if ([string]::IsNullOrWhiteSpace($targetTeamMemberSlug)) {
+                    $targetTeamMemberSlug = $sourceTeamMember.login
+                }
+
+                UpdateTeamMemberRole -org $TargetOrg -team $targetTeam.slug -teamMember $targetTeamMemberSlug -role $sourceTeamMemberRole -token $targetPat
+            }
+            else {
+                Write-Host "The team member '$($sourceTeamMember.login)' cannot be added to team '$($targetTeam.name)' in org '$TargetOrg'. The slug mapping is empty." -ForegroundColor Yellow
+            }
         }
     }
 }
