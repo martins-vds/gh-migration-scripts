@@ -128,7 +128,7 @@ $sourceRepos | ForEach-Object {
             
             $targetRepo = GetRepo -org $TargetOrg -repo $sourceRepo.name -token $targetPat
 
-            Migrate-Environment -org $TargetOrg -repo $sourceRepo.name -environment $sourceRepoEnvironment -token $targetPat
+            MigrateEnvironment -org $TargetOrg -repo $sourceRepo.name -environment $sourceRepoEnvironment -token $targetPat
 
             $targetRepoEnvironmentPublicKey = GetEnvironmentPublicyKey -repoId $targetRepo.id -environmentName $sourceRepoEnvironment.name -token $targetPat
 

@@ -48,6 +48,30 @@ function GetSlugMappings ($path) {
     return @(Import-Csv -Path $path)
 }
 
+function FindRootTeams($teams) {
+    $rootTeams = @()
+
+    $teams | ForEach-Object {
+        $team = $_
+
+        if ($null -eq $team.parent) {
+            $rootTeams += $team
+        }
+        else {
+            do {
+                $parent = $teams | Where-Object -Property slug -EQ -Value $team.parent.slug
+                $team = $parent
+            } while (
+                $null -ne $team.parent
+            )
+
+            $rootTeams += $team
+        }
+    }
+
+    return $rootTeams | Select-Object -Unique
+}
+
 $sourcePat = GetToken -token $SourceToken -envToken $env:GH_SOURCE_PAT
 $targetPat = GetToken -token $TargetToken -envToken $env:GH_PAT
 
@@ -67,9 +91,19 @@ $newTeams = @()
 
 $sourceTeams | ForEach-Object {
     $sourceTeam = $_
+    $sourceTeamGroups = GetTeamGroups -org $SourceOrg -team $sourceTeam.slug -token $sourcePat
+
     $targetTeam = $sourceTeam | Select-Object -Property @{name = "name"; expr = { $_.slug } }, description, privacy, permission
 
     $newTeam = CreateOrFetchTeam -org $TargetOrg -team $targetTeam -token $targetPat | Select-Object -Property id, name, slug
+
+    if ($sourceTeamGroups.Length -gt 0) {
+        $newTeamGroups = UpdateTeamGroups -org $TargetOrg -team $newTeam.slug -groups $sourceTeamGroups -token $targetPat
+
+        if ($newTeamGroups.Length -eq 0) {
+            Write-Host "The groups cannot be added to team $($newTeam.slug) in org '$TargetOrg'. This team is not externally managed." -ForegroundColor Yellow
+        }
+    }
 
     $newTeams += $newTeam
 }
@@ -91,7 +125,8 @@ Write-Host "Adding team repositories in the organization '$TargetOrg'..." -Foreg
 
 $defaultPermissions = @("pull", "triage", "push", "maintain", "admin")
 
-$sourceTeams | ForEach-Object {
+$rootTeams = FindRootTeams($sourceTeams)
+$rootTeams | ForEach-Object {
     $sourceTeam = $_    
     $sourceTeamRepos = GetTeamRepos -org $SourceOrg -team $sourceTeam.slug -token $sourcePat
 

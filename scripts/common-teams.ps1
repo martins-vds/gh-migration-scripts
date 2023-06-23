@@ -101,3 +101,99 @@ function UpdateTeamRepoPermission($org, $team, $repo, $permission, $token) {
         }
     }
 }
+
+function GetTeamGroupMappings($org, $team, $token) {
+    $teamsApi = "https://api.github.com/orgs/$org/teams/$team/team-sync/group-mappings"
+    try {
+        return Get -uri $teamsApi -token $token | Select-Object -ExpandProperty groups
+    }
+    catch [Microsoft.PowerShell.Commands.HttpResponseException] {
+        if ($_.Exception.Response.StatusCode -eq [System.Net.HttpStatusCode]::NotFound -or ($_.Exception.Response.StatusCode -eq [System.Net.HttpStatusCode]::Forbidden -and $_.ErrorDetails.Message -like "*not externally managed*")) {
+            return @()
+        }
+
+        throw
+    }
+}
+
+function UpdateTeamGroupMappings ($org, $team, $groups, $token) {
+    $teamsApi = "https://api.github.com/orgs/$org/teams/$team/team-sync/group-mappings"
+
+    $body = @{
+        groups = $groups
+    }
+
+    try {
+        return Patch -uri $teamsApi -body $body -token $token | Select-Object -ExpandProperty groups
+    }
+    catch [Microsoft.PowerShell.Commands.HttpResponseException] {
+        if ($_.Exception.Response.StatusCode -eq [System.Net.HttpStatusCode]::NotFound -or ($_.Exception.Response.StatusCode -eq [System.Net.HttpStatusCode]::Forbidden -and $_.ErrorDetails.Message -like "*not externally managed*")) {
+            return @()
+        }
+
+        throw
+    }
+}
+
+function GetTeamExternalGroups ($org, $team, $token) {
+    $teamsApi = "https://api.github.com/orgs/$org/teams/$team/external-groups"
+
+    try {
+        return Get -uri $teamsApi -token $token | Select-Object -ExpandProperty groups
+    }
+    catch [Microsoft.PowerShell.Commands.HttpResponseException] {
+        if ($_.Exception.Response.StatusCode -eq [System.Net.HttpStatusCode]::NotFound -or ($_.Exception.Response.StatusCode -eq [System.Net.HttpStatusCode]::BadRequest -and $_.ErrorDetails.Message -like "*not part of externally managed*")) {
+            return @()
+        }
+
+        throw
+    }
+}
+
+function UpdateTeamExternalGroups ($org, $team, $groups, $token) {
+    $teamsApi = "https://api.github.com/orgs/$org/teams/$team/external-groups"
+
+    $groupsAdded = @()
+
+    $groups | ForEach-Object {
+        $group = $_
+        $body = @{
+            group_id = $group.group_id
+        }
+
+        try {
+            $groupsAdded += Patch -uri $teamsApi -body $body -token $token
+        }
+        catch [Microsoft.PowerShell.Commands.HttpResponseException] {
+            if ($_.Exception.Response.StatusCode -ne [System.Net.HttpStatusCode]::NotFound -and ($_.Exception.Response.StatusCode -ne [System.Net.HttpStatusCode]::BadRequest -and $_.ErrorDetails.Message -notlike "*not part of externally managed*")) {
+                throw
+            }
+        }
+    }
+
+    return $groupsAdded
+}
+
+function GetTeamGroups($org, $team, $token) {
+    $groups = GetTeamGroupMappings -org $org -team $team -token $token
+    
+    if ($groups.Length -eq 0) {
+        $groups = GetTeamExternalGroups -org $org -team $team -token $token
+    }
+
+    return $groups
+}
+
+function UpdateTeamGroups($org, $team, $groups, $token) {
+    if ($groups.Length -eq 0) {
+        return
+    }
+
+    $added = UpdateTeamGroupMappings -org $org -team $team -groups $groups -token $token
+    
+    if ($added.Length -eq 0) {
+        $added = UpdateTeamExternalGroups -org $org -team $team -groups $groups -token $token
+    }
+
+    return $added
+}
