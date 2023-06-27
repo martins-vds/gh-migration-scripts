@@ -18,9 +18,10 @@
   - [Step 11: Get the list of repositories in the source organization](#step-11-get-the-list-of-repositories-in-the-source-organization)
   - [Step 12: Migrate your repositories](#step-12-migrate-your-repositories)
   - [Step 13: Migrate your teams](#step-13-migrate-your-teams)
-  - [Step 14: Migrate your repository and environment secrets](#step-14-migrate-your-repository-and-environment-secrets)
-  - [Step 15: Reclaim mannequins](#step-15-reclaim-mannequins)
-  - [Step 16: Post-migration checks](#step-16-post-migration-checks)
+  - [Step 14: Migrate your repository environments and their variables](#step-14-migrate-your-repository-environments-and-their-variables)
+  - [Step 15: Migrate your repository and environment secrets](#step-15-migrate-your-repository-and-environment-secrets)
+  - [Step 16: Reclaim mannequins](#step-16-reclaim-mannequins)
+  - [Step 17: Post-migration checks](#step-17-post-migration-checks)
   - [Appendix](#appendix)
     - [Create Personal Access Tokens](#create-personal-access-tokens)
     - [Authorizing a personal access token for use with SAML single sign-on](#authorizing-a-personal-access-token-for-use-with-saml-single-sign-on)
@@ -212,8 +213,7 @@ This step can take a long time to complete depending on the number of repositori
 To migrate teams, run the script `migrate-teams.ps1`:
 
 ```posh
-# If you want to add team members to the destination organization, run the script with the -AddTeamMembers flag
-.\scripts\migrate-teams.ps1 -SourceOrg <SOURCE> -TargetOrg <DESTINATION> -SlugMappingFile .\slug-mapping.csv -SkipEmptySlugMappings [-AddTeamMembers]
+.\scripts\migrate-teams.ps1 -SourceOrg <SOURCE> -TargetOrg <DESTINATION> -SlugMappingFile .\slug-mapping.csv -ReposFile .\repos.csv -SkipEmptySlugMappings -AddTeamMembers
 ```
 
 Replace the placeholders in the command above with the following values:
@@ -225,7 +225,24 @@ Replace the placeholders in the command above with the following values:
 
 > Note: Make sure that user access is managed by using teams in the source organization. If you have users with direct access to repositories, you must remove them from the repositories and add them to the appropriate teams in the source organization before migrating.
 
-## Step 14: Migrate your repository and environment secrets
+## Step 14: Migrate your repository environments and their variables
+
+> Note: This script currently **does not support** migrating deployment branches. You must manually add the deployment branches to the destination organization. For more information, see [**Deployment branches**](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment#deployment-branches)
+
+To migrate repository environments and their variables, run the script `migrate-repo-environments.ps1`:
+
+```posh
+.\scripts\migrate-repo-environments.ps1 -SourceOrg <SOURCE> -TargetOrg <DESTINATION> -ReposFile .\repos.csv
+```
+
+Replace the placeholders in the command above with the following values:
+
+|Placeholder|Value|
+|-----------|-----|
+|SOURCE|Name of the source organization|
+|DESTINATION|The name you want the new organization to have. Must be unique on GitHub.com|
+
+## Step 15: Migrate your repository and environment secrets
 
 > Note: If you don't own the repositories in the source organization, you must ask the repository owners to export the repository secrets and send them to you. You can then import the repository secrets in the destination organization.
 
@@ -258,7 +275,7 @@ Replace the placeholders in the command above with the following values:
 
   This script will import the repository secrets for each repository in the destination organization which you want to migrate. If a secret is not found in the CSV file, a default value `CHANGE_ME` will be used.
 
-## Step 15: Reclaim mannequins
+## Step 16: Reclaim mannequins
 
 1. Optionally, to reclaim mannequins in bulk, create a CSV file that maps mannequins to organization members.
 
@@ -292,7 +309,7 @@ Replace the placeholders in the command above with the following values:
 
 3. The organization member will receive an invitation via email, and the mannequin will not be reclaimed until the member accepts the invitation.
 
-## Step 16: Post-migration checks
+## Step 17: Post-migration checks
 
 1. Check if all the repositories have been migrated
    - If there are missing repositories in the destination organization, check the repositories file and confirm that the all the repositories you want to migrate are listed in the file
