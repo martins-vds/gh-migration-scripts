@@ -6,6 +6,24 @@ param (
     [Parameter(Mandatory = $true)]
     [ValidateNotNullOrEmpty()]
     $TargetOrg,
+    [Parameter(Mandatory = $true)]
+    [ValidateScript({
+            if (-Not ($_ | Test-Path) ) {
+                throw "File or folder does not exist"
+            }
+
+            if (-Not ($_ | Test-Path -PathType Leaf) ) {
+                throw "The ReposFile argument must be a file. Folder paths are not allowed."
+            }
+
+            if ($_ -notmatch "(\.csv$)") {
+                throw "The file specified in the ReposFile argument must be of type csv"
+            }
+
+            return $true 
+        })]
+    [System.IO.FileInfo]
+    $ReposFile,
     [Parameter(Mandatory = $false)]
     [System.IO.FileInfo]
     $SlugMappingFile,
@@ -121,41 +139,57 @@ $sourceTeams | ForEach-Object {
     }
 }
 
-Write-Host "Adding team repositories in the organization '$TargetOrg'..." -ForegroundColor Blue
+$sourceRepos = Import-Csv -Path $ReposFile
 
 $defaultPermissions = @("pull", "triage", "push", "maintain", "admin")
 
-$sourceTeams | ForEach-Object {
-    $sourceTeam = $_    
-    $sourceTeamRepos = GetTeamRepos -org $SourceOrg -team $sourceTeam.slug -token $sourcePat
+$sourceRepos | ForEach-Object {
+    $sourceRepo = $_
+    $sourceRepoTeams = GetRepoTeams -org $SourceOrg -repo $sourceRepo.name -token $sourcePat
 
-    $targetTeam = $newTeams | Where-Object -Property slug -EQ -Value $sourceTeam.slug
+    Write-Host "Adding teams to repo '$($sourceRepo.name)' in the organization '$TargetOrg'..." -ForegroundColor Blue
 
-    $sourceTeamRepos | ForEach-Object {
-        $sourceTeamRepo = $_
-        
-        if (ExistsRepo -org $TargetOrg -repo $sourceTeamRepo.name -token $targetPat) {
-            $permissions = $defaultPermissions | ForEach-Object { if ($sourceTeamRepo.permissions.$_) { return $_ } }
-            $permissions | ForEach-Object { UpdateTeamRepoPermission -org $TargetOrg -team $targetTeam.slug -repo "$TargetOrg/$($sourceTeamRepo.name)" -permission $_ -token $targetPat }
-        }
-        else {
-            Write-Host "The team '$($targetTeam.name)' cannot be added to repo '$($sourceTeamRepo.name)' in org '$TargetOrg'. This repo does not exist." -ForegroundColor Yellow
-        }
+    if (ExistsRepo -org $TargetOrg -repo $sourceRepo.name -token $targetPat) {
+        $sourceRepoTeams | ForEach-Object {
+            $sourceRepoTeam = $_
+    
+            $targetRepoTeam = $newTeams | Where-Object -Property slug -EQ -Value $sourceRepoTeam.slug
+    
+            if ($null -ne $targetRepoTeam) {
+                $permissions = $defaultPermissions | ForEach-Object { if ($sourceRepoTeam.permissions.$_) { return $_ } }
+                $permissions | ForEach-Object { UpdateTeamRepoPermission -org $TargetOrg -team $targetRepoTeam.slug -repo "$TargetOrg/$($sourceRepo.name)" -permission $_ -token $targetPat }            
+            }
+            else {
+                Write-Host "The team '$($sourceRepoTeam.slug)' cannot be added to repo '$($sourceRepo.name)' in org '$TargetOrg'. This team does not exist." -ForegroundColor Yellow
+            }
+        }  
+    }
+    else {
+        Write-Host "Teams cannot be added to repo '$($sourceRepo.name)' in org '$TargetOrg'. This repo does not exist." -ForegroundColor Yellow
     }
 }
 
 if ($AddTeamMembers) {
-    Write-Host "Adding team members in the organization '$TargetOrg'..." -ForegroundColor Blue
+    $allSourceRepoTeams = @()
 
-    $sourceTeams | ForEach-Object {
-        $sourceTeam = $_    
-        $sourceTeamMembers = GetTeamMembers -org $SourceOrg -team $sourceTeam.slug -token $sourcePat
+    $sourceRepos | ForEach-Object {
+        $sourceRepo = $_
+        $sourceRepoTeams = GetRepoTeams -org $SourceOrg -repo $sourceRepo.name -token $sourcePat
 
-        $targetTeam = $newTeams | Where-Object -Property slug -EQ -Value $sourceTeam.slug
+        $allSourceRepoTeams += $sourceRepoTeams | Select-Object -Property slug, name      
+    }
 
-        $sourceTeamMembers | ForEach-Object {
+    $allSourceRepoTeams = $allSourceRepoTeams | Select-Object -Unique
+
+    $allSourceRepoTeams | ForEach-Object {
+        $sourceRepoTeam = $_    
+        $sourceRepoTeamMembers = GetTeamMembers -org $SourceOrg -team $sourceRepoTeam.slug -token $sourcePat
+
+        $targetTeam = $newTeams | Where-Object -Property slug -EQ -Value $sourceRepoTeam.slug
+
+        $sourceRepoTeamMembers | ForEach-Object {
             $sourceTeamMember = $_
-            $sourceTeamMemberRole = GetTeamMemberRole -org $SourceOrg -team $sourceTeam.slug -teamMember $sourceTeamMember.login -token $sourcePat
+            $sourceTeamMemberRole = GetTeamMemberRole -org $SourceOrg -team $sourceRepoTeam.slug -teamMember $sourceTeamMember.login -token $sourcePat
         
             $targetTeamMemberSlug = $slugMappings | Where-Object -Property slug_source_org -EQ -Value $sourceTeamMember.login | Select-Object -First 1 -ExpandProperty slug_target_org
 
@@ -173,5 +207,58 @@ if ($AddTeamMembers) {
         }
     }
 }
+
+# Write-Host "Adding team repositories in the organization '$TargetOrg'..." -ForegroundColor Blue
+
+# $defaultPermissions = @("pull", "triage", "push", "maintain", "admin")
+
+# $sourceTeams | ForEach-Object {
+#     $sourceTeam = $_    
+#     $sourceTeamRepos = GetTeamRepos -org $SourceOrg -team $sourceTeam.slug -token $sourcePat
+
+#     $targetTeam = $newTeams | Where-Object -Property slug -EQ -Value $sourceTeam.slug
+
+#     $sourceTeamRepos | ForEach-Object {
+#         $sourceTeamRepo = $_
+        
+#         if (ExistsRepo -org $TargetOrg -repo $sourceTeamRepo.name -token $targetPat) {
+#             $permissions = $defaultPermissions | ForEach-Object { if ($sourceTeamRepo.permissions.$_) { return $_ } }
+#             $permissions | ForEach-Object { UpdateTeamRepoPermission -org $TargetOrg -team $targetTeam.slug -repo "$TargetOrg/$($sourceTeamRepo.name)" -permission $_ -token $targetPat }
+#         }
+#         else {
+#             Write-Host "The team '$($targetTeam.name)' cannot be added to repo '$($sourceTeamRepo.name)' in org '$TargetOrg'. This repo does not exist." -ForegroundColor Yellow
+#         }
+#     }
+# }
+
+# if ($AddTeamMembers) {
+#     Write-Host "Adding team members in the organization '$TargetOrg'..." -ForegroundColor Blue
+
+#     $sourceTeams | ForEach-Object {
+#         $sourceTeam = $_    
+#         $sourceTeamMembers = GetTeamMembers -org $SourceOrg -team $sourceTeam.slug -token $sourcePat
+
+#         $targetTeam = $newTeams | Where-Object -Property slug -EQ -Value $sourceTeam.slug
+
+#         $sourceTeamMembers | ForEach-Object {
+#             $sourceTeamMember = $_
+#             $sourceTeamMemberRole = GetTeamMemberRole -org $SourceOrg -team $sourceTeam.slug -teamMember $sourceTeamMember.login -token $sourcePat
+        
+#             $targetTeamMemberSlug = $slugMappings | Where-Object -Property slug_source_org -EQ -Value $sourceTeamMember.login | Select-Object -First 1 -ExpandProperty slug_target_org
+
+#             if (-Not($SkipEmptySlugMappings) -or -Not([string]::IsNullOrWhiteSpace($targetTeamMemberSlug))) {
+
+#                 if ([string]::IsNullOrWhiteSpace($targetTeamMemberSlug)) {
+#                     $targetTeamMemberSlug = $sourceTeamMember.login
+#                 }
+
+#                 UpdateTeamMemberRole -org $TargetOrg -team $targetTeam.slug -teamMember $targetTeamMemberSlug -role $sourceTeamMemberRole -token $targetPat
+#             }
+#             else {
+#                 Write-Host "The team member '$($sourceTeamMember.login)' cannot be added to team '$($targetTeam.name)' in org '$TargetOrg'. The slug mapping is empty." -ForegroundColor Yellow
+#             }
+#         }
+#     }
+# }
 
 Write-Host "Done." -ForegroundColor Green

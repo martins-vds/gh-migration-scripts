@@ -183,3 +183,17 @@ function UnarchiveRepo ($org, $repo, $token) {
         }
     }
 }
+
+function GetRepoTeams ($org, $repo, $token) {
+    $page = 0
+    $teamsApi = "https://api.github.com/repos/$org/$repo/teams?page={0}&per_page=100"
+    $allTeams = @()
+
+    do {    
+        $page += 1         
+        $teams = Get -uri "$($teamsApi -f $page)" -token $token
+        $allTeams += $teams
+    } while ($teams.Length -gt 0)
+
+    return $allTeams
+}
