@@ -125,8 +125,7 @@ Write-Host "Adding team repositories in the organization '$TargetOrg'..." -Foreg
 
 $defaultPermissions = @("pull", "triage", "push", "maintain", "admin")
 
-$rootTeams = FindRootTeams($sourceTeams)
-$rootTeams | ForEach-Object {
+$sourceTeams | ForEach-Object {
     $sourceTeam = $_    
     $sourceTeamRepos = GetTeamRepos -org $SourceOrg -team $sourceTeam.slug -token $sourcePat
 
