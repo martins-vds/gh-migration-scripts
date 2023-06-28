@@ -109,19 +109,10 @@ $newTeams = @()
 
 $sourceTeams | ForEach-Object {
     $sourceTeam = $_
-    $sourceTeamGroups = GetTeamGroups -org $SourceOrg -team $sourceTeam.slug -token $sourcePat
 
     $targetTeam = $sourceTeam | Select-Object -Property @{name = "name"; expr = { $_.slug } }, description, privacy, permission
 
     $newTeam = CreateOrFetchTeam -org $TargetOrg -team $targetTeam -token $targetPat | Select-Object -Property id, name, slug
-
-    if ($sourceTeamGroups.Length -gt 0) {
-        $newTeamGroups = UpdateTeamGroups -org $TargetOrg -team $newTeam.slug -groups $sourceTeamGroups -token $targetPat
-
-        if ($newTeamGroups.Length -eq 0) {
-            Write-Host "The groups cannot be added to team $($newTeam.slug) in org '$TargetOrg'. This team is not externally managed." -ForegroundColor Yellow
-        }
-    }
 
     $newTeams += $newTeam
 }
@@ -179,13 +170,22 @@ if ($AddTeamMembers) {
         $allSourceRepoTeams += $sourceRepoTeams | Select-Object -Property slug, name      
     }
 
-    $allSourceRepoTeams = $allSourceRepoTeams | Select-Object -Unique
+    $allSourceRepoTeams = $allSourceRepoTeams | Select-Object -Property slug, name -Unique 
 
     $allSourceRepoTeams | ForEach-Object {
-        $sourceRepoTeam = $_    
+        $sourceRepoTeam = $_
+        $sourceRepoTeamGroups = GetTeamGroups -org $SourceOrg -team $sourceTeam.slug -token $sourcePat
         $sourceRepoTeamMembers = GetTeamMembers -org $SourceOrg -team $sourceRepoTeam.slug -token $sourcePat
 
         $targetTeam = $newTeams | Where-Object -Property slug -EQ -Value $sourceRepoTeam.slug
+
+        if ($sourceRepoTeamGroups.Length -gt 0) {
+            $targetTeamGroups = UpdateTeamGroups -org $TargetOrg -team $targetTeam.slug -groups $sourceRepoTeamGroups -token $targetPat
+    
+            if ($targetTeamGroups.Length -eq 0) {
+                Write-Host "The groups cannot be added to team $($targetTeam.slug) in org '$TargetOrg'. This team is not externally managed." -ForegroundColor Yellow
+            }
+        }
 
         $sourceRepoTeamMembers | ForEach-Object {
             $sourceTeamMember = $_
