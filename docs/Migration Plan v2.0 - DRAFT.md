@@ -37,6 +37,7 @@ The following items will be migrated from the source organization to the destina
 
 - Repositories and their contents (including issues, pull requests, releases, wikis, etc.)
 - Teams, team members and team permissions
+- Environments and environment variables, **except** deployment branches
 - Organization, repository and environment secrets
 
 Anything not explicitly listed above **will not** be migrated, *including but not limited to*:
@@ -47,6 +48,9 @@ Anything not explicitly listed above **will not** be migrated, *including but no
 - Discussions
 - Webhooks
 - SSH keys
+- Repository variables
+- Organization variables
+- Dependabot secrets
 
 ## Step 1: Install Git for Windows
 
