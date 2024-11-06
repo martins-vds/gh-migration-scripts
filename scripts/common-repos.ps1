@@ -197,3 +197,26 @@ function GetRepoTeams ($org, $repo, $token) {
 
     return $allTeams
 }
+
+function TransferRepo ($org, $repo, $newOrg, $token) {
+    $transferApi = "https://api.github.com/repos/$org/$repo/transfer"
+    $body = @{ new_owner = $newOrg }
+
+    try {
+        Post -uri $transferApi -token $token -body $body | Out-Null
+        Write-Host "Successfully transferred repo '$repo' from org '$org' to org '$newOrg'." -ForegroundColor Green
+    }
+    catch {
+        if ($_.Exception.Response.StatusCode -ne [System.Net.HttpStatusCode]::Forbidden -or $_.Exception.Response.StatusCode -ne [System.Net.HttpStatusCode]::UnprocessableEntity) {
+            throw
+        }
+
+        if ($_.Exception.Response.StatusCode -eq [System.Net.HttpStatusCode]::Forbidden) {
+            Write-Host "The authenticated user does not have the necessary permissions to transfer the repo '$repo' from org '$org' to org '$newOrg'. No operation will be performed." -ForegroundColor Yellow
+        }
+
+        if ($_.Exception.Response.StatusCode -eq [System.Net.HttpStatusCode]::UnprocessableEntity) {
+            Write-Host "Internal repositories like '$repo' can only be transferred to an organization in the same enterprise. No operation will be performed." -ForegroundColor Yellow
+        }
+    }
+}
