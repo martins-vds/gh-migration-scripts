@@ -174,7 +174,7 @@ function UnarchiveRepo ($org, $repo, $token) {
         Write-Host "Successfully unarchived repo '$repo' in org '$org'." -ForegroundColor Green
     }
     catch {
-        if ($_.Exception.Response.StatusCode -ne [System.Net.HttpStatusCode]::Forbidden -or $_.Exception.Response.StatusCode -ne [System.Net.HttpStatusCode]::NotFound) {
+        if ($_.Exception.Response.StatusCode -ne [System.Net.HttpStatusCode]::Forbidden -and $_.Exception.Response.StatusCode -ne [System.Net.HttpStatusCode]::NotFound) {
             throw
         }
 
@@ -207,7 +207,7 @@ function TransferRepo ($org, $repo, $newOrg, $token) {
         Write-Host "Successfully transferred repo '$repo' from org '$org' to org '$newOrg'." -ForegroundColor Green
     }
     catch {
-        if ($_.Exception.Response.StatusCode -ne [System.Net.HttpStatusCode]::Forbidden -or $_.Exception.Response.StatusCode -ne [System.Net.HttpStatusCode]::UnprocessableEntity) {
+        if ($_.Exception.Response.StatusCode -ne [System.Net.HttpStatusCode]::Forbidden -and $_.Exception.Response.StatusCode -ne [System.Net.HttpStatusCode]::UnprocessableEntity) {
             throw
         }
 
@@ -215,7 +215,7 @@ function TransferRepo ($org, $repo, $newOrg, $token) {
             Write-Host "The authenticated user does not have the necessary permissions to transfer the repo '$repo' from org '$org' to org '$newOrg'. No operation will be performed." -ForegroundColor Yellow
         }
 
-        if ($_.Exception.Response.StatusCode -eq [System.Net.HttpStatusCode]::UnprocessableEntity) {
+        if ($_.Exception.Response.StatusCode -eq [System.Net.HttpStatusCode]::UnprocessableContent) {
             Write-Host "Internal repositories like '$repo' can only be transferred to an organization in the same enterprise. No operation will be performed." -ForegroundColor Yellow
         }
     }
