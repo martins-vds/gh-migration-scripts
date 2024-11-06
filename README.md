@@ -2,9 +2,7 @@
 
 ## Documents
 
-- [Migration Plan v1.5](docs/Migration%20Plan%20v1.5.md)
-  - NO LONGER MAINTAINED
-- [Migration Plan v2.0 - DRAFT](docs/Migration%20Plan%20v2.0%20-%20DRAFT.md).
+- [Migration Plan v2.0](docs/Migration%20Plan%20v2.0.md).
   - This is a work in progress. It is not yet complete but is being updated as we learn more about the migration process and it will become the new migration plan.
 
 ## Scripts Overview
