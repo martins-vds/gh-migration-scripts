@@ -40,7 +40,7 @@ The following items will be migrated from the source organization to the destina
 - Environments and environment variables, **except** deployment branches
 - Organization, repository and environment secrets
 
-Anything not explicitly listed below **will not** be migrated, *including but not limited to*:
+Anything not explicitly listed above **will not** be migrated, *including but not limited to*:
 
 - GitHub Apps
 - GitHub Packages
