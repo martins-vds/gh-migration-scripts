@@ -178,9 +178,9 @@ $executionDuration = Measure-Command {
                         $succeeded++                        
                     }
                     else {
-                        $failed = $waitOutput.errors | Where-Object { $_ -match "migration\s+$repoMigrationId\s+failed\s+for\s+$repoName" } | Select-Object -First 1
+                        $failedMsg = $waitOutput.errors | Where-Object { $_ -match "migration\s+$repoMigrationId\s+failed\s+for\s+$repoName" } | Select-Object -First 1
 
-                        if (![string]::IsNullOrWhiteSpace($failed)) {
+                        if (![string]::IsNullOrWhiteSpace($failedMsg)) {
                             Write-Host "Failed to migrate repo '$repoName'. Dowloading migration logs..." -ForegroundColor Red
                 
                             $repoMigrations[$repoName].State = "Failed"
